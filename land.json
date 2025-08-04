@@ -37,12 +37,12 @@
       "landType": "Player",
       "paymentCode": "1P5JUI",
       "purchaseTime": 1754326732776,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 1367.3
 }
