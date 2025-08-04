@@ -42,7 +42,7 @@
       "landType": "Player",
       "paymentCode": "EWJZWX",
       "purchaseTime": 1754320806542,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
