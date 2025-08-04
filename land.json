@@ -1,8 +1,14 @@
 {
-    "users": [],
-    "lands": [],
-    "govConfig": {
-        "gap": 10,
-        "landType": "Government"
+  "users": [
+    {
+      "minecraftName": "name",
+      "edition": "Java",
+      "contact": {}
     }
+  ],
+  "lands": [],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  }
 }
