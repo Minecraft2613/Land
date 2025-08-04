@@ -37,7 +37,7 @@
       "landType": "Player",
       "paymentCode": "AE71Q9",
       "purchaseTime": 1754323313614,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
