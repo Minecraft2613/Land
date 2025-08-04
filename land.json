@@ -38,6 +38,38 @@
       "paymentCode": "4GYIRZ",
       "purchaseTime": 1754323777080,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 106,
+          "y": 70,
+          "z": 186
+        },
+        {
+          "x": 5,
+          "y": 73,
+          "z": 186
+        },
+        {
+          "x": 5,
+          "y": 67,
+          "z": 249
+        },
+        {
+          "x": 105,
+          "y": 67,
+          "z": 249
+        }
+      ],
+      "blocks": 0,
+      "cost": 0,
+      "gap": 0,
+      "landType": "Player",
+      "paymentCode": null,
+      "purchaseTime": 1754324270946,
+      "paid": true
     }
   ],
   "govConfig": {
