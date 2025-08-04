@@ -70,6 +70,38 @@
       "paymentCode": null,
       "purchaseTime": 1754325136183,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 74,
+          "y": 71,
+          "z": 185
+        },
+        {
+          "x": 84,
+          "y": 71,
+          "z": 185
+        },
+        {
+          "x": 85,
+          "y": 71,
+          "z": 146
+        },
+        {
+          "x": 73,
+          "y": 71,
+          "z": 146
+        }
+      ],
+      "blocks": 0,
+      "cost": 0,
+      "gap": 0,
+      "landType": "Player",
+      "paymentCode": null,
+      "purchaseTime": 1754325354524,
+      "paid": true
     }
   ],
   "govConfig": {
