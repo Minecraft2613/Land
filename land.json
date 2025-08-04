@@ -1,8 +1,41 @@
- {
-             "users": [],
-               "lands": [],
-               "govConfig": {
-                   "gap": 10,
-                   "landType": "Government"
-              }
-            }
+{
+  "users": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 102,
+          "y": 71,
+          "z": 115
+        },
+        {
+          "x": 109,
+          "y": 71,
+          "z": 115
+        },
+        {
+          "x": 109,
+          "y": 71,
+          "z": 124
+        },
+        {
+          "x": 103,
+          "y": 71,
+          "z": 124
+        }
+      ],
+      "blocks": 0,
+      "cost": 0,
+      "gap": 0,
+      "landType": "Player",
+      "paymentCode": null,
+      "purchaseTime": 1754323045548,
+      "paid": true
+    }
+  ],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  }
+}
