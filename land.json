@@ -37,7 +37,7 @@
       "landType": "Player",
       "paymentCode": "4GYIRZ",
       "purchaseTime": 1754323777080,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
