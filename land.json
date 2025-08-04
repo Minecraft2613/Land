@@ -8,10 +8,40 @@
     {
       "minecraftName": "Name",
       "minecraftEdition": "Java",
-      "wallet": 1000
+      "wallet": 988.7
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "Name",
+      "coords": [
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      ],
+      "blocks": 1,
+      "cost": 11.3,
+      "gap": 7,
+      "landType": "Player"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
