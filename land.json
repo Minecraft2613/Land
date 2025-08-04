@@ -1,5 +1,11 @@
 {
-  "users": [],
+  "users": [
+    {
+      "minecraftName": "ansh",
+      "minecraftEdition": "Java",
+      "wallet": 1000
+    }
+  ],
   "lands": [
     {
       "owner": "ansh",
@@ -37,5 +43,6 @@
   "govConfig": {
     "gap": 10,
     "landType": "Government"
-  }
+  },
+  "governmentBalance": 0
 }
