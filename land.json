@@ -4,6 +4,11 @@
       "minecraftName": "name",
       "edition": "Java",
       "contact": {}
+    },
+    {
+      "minecraftName": "Name",
+      "minecraftEdition": "Java",
+      "wallet": 1000
     }
   ],
   "lands": [],
