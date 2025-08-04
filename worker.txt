@@ -1,0 +1,203 @@
+// Hardcoded GitHub repository details
+const REPO_OWNER = 'Minecraft2613';
+const REPO_NAME = 'respo-Land';
+const FILE_PATH = 'land.json';
+
+// IMPORTANT: This script expects you to set the GITHUB_TOKEN environment variable
+// in your Cloudflare Worker settings.
+
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request))
+})
+
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  // Centralized error handler
+  const handleError = (e, status = 500) => {
+    console.error("Worker Error:", e);
+    const errorDetails = {
+      message: e.message,
+      stack: e.stack,
+    };
+    return new Response(JSON.stringify({ error: "Worker Error", details: errorDetails }), {
+      status: status,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
+  };
+
+  // Validate the GITHUB_TOKEN at the start of the request handling.
+  if (typeof GITHUB_TOKEN === 'undefined' || !GITHUB_TOKEN) {
+    return handleError(new Error('GitHub token not configured in worker environment variables.'), 500);
+  }
+
+  // GET data route
+  if (path === '/data' && request.method === 'GET') {
+    try {
+      const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+      
+      if (response.status === 404) {
+        // Updated defaultData to include governmentBalance
+        const defaultData = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 };
+        return new Response(JSON.stringify(defaultData), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`GitHub API Error (GET): ${response.status} ${response.statusText} - ${errorText}`);
+      }
+      
+      const fileData = await response.json();
+      const content = atob(fileData.content);
+      return new Response(content, { headers: { 'Content-Type': 'application/json', ...corsHeaders } });
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST data route (for saving all data from web)
+  if (path === '/data' && request.method === 'POST') {
+    try {
+      const newContent = await request.json();
+      const newContentString = JSON.stringify(newContent, null, 2);
+      
+      const getFileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const fileResponse = await fetch(getFileUrl, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+      
+      let fileSha;
+      if (fileResponse.ok) {
+        fileSha = (await fileResponse.json()).sha;
+      } else if (fileResponse.status !== 404) {
+        const errorText = await fileResponse.text();
+        throw new Error(`GitHub API Error (SHA Check): ${fileResponse.status} ${fileResponse.statusText} - ${errorText}`);
+      }
+
+      const updateFileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const updateResponse = await fetch(updateFileUrl, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: 'Update land.json via Cloudflare Worker',
+          content: btoa(unescape(encodeURIComponent(newContentString))),
+          sha: fileSha
+        })
+      });
+      
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`GitHub API Error (PUT): ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`);
+      }
+      
+      const responseData = await updateResponse.json();
+      return new Response(JSON.stringify({ message: 'Data saved successfully!', data: responseData }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST claim data route (for land claims from plugin)
+  if (path === '/claim' && request.method === 'POST') {
+    try {
+      const claimData = await request.json();
+
+      // Fetch current land data
+      const currentDataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      let currentContent = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 }; // Updated default
+      let fileSha;
+
+      if (currentDataResponse.ok) {
+        const currentFileData = await currentDataResponse.json();
+        fileSha = currentFileData.sha;
+        currentContent = JSON.parse(atob(currentFileData.content));
+      } else if (currentDataResponse.status !== 404) {
+        const errorText = await currentDataResponse.text();
+        throw new Error(`GitHub API Error (GET current data for claim): ${currentDataResponse.status} ${currentDataResponse.statusText} - ${errorText}`);
+      }
+
+      // Add new claim to lands array
+      currentContent.lands.push({
+        owner: claimData.playerName,
+        coords: claimData.coords,
+        blocks: 0, // Will be calculated by web interface later
+        cost: 0, // Will be calculated by web interface later
+        gap: 0, // Will be determined by web interface later
+        landType: 'Player', // Default to player land for in-game claims
+        paymentCode: null, // No payment code for in-game claims initially
+        purchaseTime: new Date().getTime(),
+        paid: true // In-game claims are considered paid immediately
+      });
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      const updateFileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+      const updateResponse = await fetch(updateFileUrl, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: 'Add land claim from plugin',
+          content: btoa(unescape(encodeURIComponent(updatedContentString))),
+          sha: fileSha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`GitHub API Error (PUT claim): ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`);
+      }
+
+      return new Response(JSON.stringify({ message: 'Land claim received and saved!' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  return handleError(new Error('Not Found'), 404);
+}

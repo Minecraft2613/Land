@@ -4,252 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Land Registry</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-        
-        :root {
-            --bg-dark: #121212;
-            --bg-card: #1e1e1e;
-            --text-light: #e0e0e0;
-            --text-dark: #8c8c8c;
-            --primary-color: #4CAF50;
-            --secondary-color: #FF5722;
-            --accent-color: #2196F3;
-            --input-bg: #2c2c2c;
-            --border-color: #424242;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-light);
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            border-bottom: 2px solid var(--border-color);
-            margin-bottom: 30px;
-        }
-        
-        .app-header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            color: var(--primary-color);
-        }
-
-        .app-header .button {
-            padding: 10px 20px;
-            font-size: 1em;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-        }
-
-        .app-header .button:hover {
-            transform: translateY(-2px);
-        }
-        
-        .logout-button {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        .view-section {
-            display: none;
-            padding: 20px;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        .form-container {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: var(--bg-card);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        h2 {
-            font-size: 2em;
-            color: var(--primary-color);
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 700;
-            color: var(--text-light);
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background-color: var(--input-bg);
-            color: var(--text-light);
-            font-size: 1em;
-            transition: border-color 0.2s ease;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .button {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.2em;
-            font-weight: 700;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.2s ease;
-        }
-
-        .login-button {
-            background-color: var(--primary-color);
-            color: var(--bg-dark);
-        }
-
-        .login-button:hover:not(:disabled) {
-            background-color: #66bb6a;
-            transform: translateY(-2px);
-        }
-        
-        .button:disabled {
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .nav-buttons .button {
-            flex-grow: 1;
-            padding: 15px;
-            font-size: 1.1em;
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .nav-buttons .button:hover {
-            background-color: #42a5f5;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .land-card {
-            background-color: var(--bg-card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-        }
-
-        .land-card h3 {
-            margin-top: 0;
-            font-size: 1.5em;
-            color: var(--accent-color);
-        }
-        
-        .land-card p {
-            margin: 5px 0;
-            font-size: 0.9em;
-            color: var(--text-dark);
-        }
-        
-        .land-card .detail-value {
-            color: var(--text-light);
-            font-weight: 700;
-        }
-
-        .land-card ul {
-            list-style-type: none;
-            padding-left: 0;
-            margin-top: 10px;
-        }
-
-        .land-card ul li {
-            padding: 5px 0;
-            font-size: 0.9em;
-            color: var(--text-dark);
-        }
-        
-        .messages {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 700;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .message-success {
-            background-color: var(--primary-color);
-            color: var(--bg-dark);
-        }
-
-        .message-error {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            .app-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .app-header h1 {
-                margin-bottom: 10px;
-            }
-
-            .nav-buttons {
-                flex-direction: column;
-            }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -308,16 +63,17 @@
                         <p>Base Cost: $<span id="calc-base-cost" class="detail-value">0.00</span></p>
                         <p>10% Tax: $<span id="calc-tax" class="detail-value">0.00</span></p>
                         <p>3% GST: $<span id="calc-gst" class="detail-value">0.00</span></p>
-                        <h4 style="margin-top: 15px;">Total Cost: $<span class="detail-value">${(0).toFixed(2)}</span></h4>
+                        <h4 style="margin-top: 15px;">Total Cost: $<span id="calc-total-cost" class="detail-value">${(0).toFixed(2)}</span></h4>
                     </div>
                     <button type="submit" class="button login-button">Submit & Purchase</button>
                 </form>
                 <div id="buy-land-messages" class="messages"></div>
                 <div id="payment-section" class="land-card" style="display: none; margin-top: 20px;">
                     <h3>Complete Your Purchase In-Game</h3>
-                    <p>Your land has been reserved. To complete the purchase, use the following command in-game within the next 5 minutes:</p>
-                    <p><code>/land payment <span id="payment-code"></span></code></p>
+                    <p>Your land has been reserved. To complete the purchase, use the following command in-game within the next <span id="countdown">5:00</span> minutes:</p>
+                    <p><code>/land payment <span id="payment-code"></span> <button id="copy-code-button">Copy</button></code></p>
                     <p>Amount: $<span id="payment-amount"></span></p>
+                    <p class="messages message-error" id="payment-warning" style="display: none;">Warning: Payment code will expire soon!</p>
                 </div>
             </div>
         </section>
@@ -354,6 +110,10 @@
                     </div>
                 </div>
                 <div id="gov-panel-messages" class="messages"></div>
+                <div class="land-card" style="margin-top: 20px;">
+                    <h3>Government Balance</h3>
+                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
+                </div>
             </div>
             
             <h3 style="margin-top: 30px; margin-bottom: 20px;">Player Plot Management</h3>
@@ -364,11 +124,23 @@
         </section>
     </div>
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p id="loading-message">Processing...</p>
+    </div>
+
+    <!-- Payment Status Overlay -->
+    <div id="payment-status-overlay" style="display: none;">
+        <div id="payment-status-icon"></div>
+        <p id="payment-status-message"></p>
+        <button id="payment-status-close" class="button">Close</button>
+    </div>
+
     <script>
         // Constants
         const MAX_PLAYER_LAND_BLOCKS = 14400;
         const PLAYER_PLOT_GAP = 7;
-        // IMPORTANT: Replace this with the URL of your deployed Cloudflare Worker
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
         // Global state variables
@@ -376,6 +148,7 @@
         let users = [];
         let lands = [];
         let govConfig = { gap: 10, landType: 'Government' };
+        let governmentBalance = 0;
         let selectedPlayerForManagement = null;
 
         // DOM elements
@@ -396,6 +169,13 @@
         const buyLandSubmitButton = buyLandForm.querySelector('button[type="submit"]');
         const registerGovLandSubmitButton = document.getElementById('register-gov-land-button');
         
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingMessage = document.getElementById('loading-message');
+        const paymentStatusOverlay = document.getElementById('payment-status-overlay');
+        const paymentStatusIcon = document.getElementById('payment-status-icon');
+        const paymentStatusMessage = document.getElementById('payment-status-message');
+        const paymentStatusCloseButton = document.getElementById('payment-status-close');
+
         // Message displays
         const loginMessages = document.getElementById('messages');
         const dashboardMessages = document.getElementById('dashboard-messages');
@@ -414,6 +194,27 @@
             }, 5000);
         }
 
+        function showLoading(message) {
+            loadingMessage.textContent = message;
+            loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        function showPaymentStatus(success, message) {
+            paymentStatusOverlay.className = success ? 'success' : 'error';
+            paymentStatusIcon.innerHTML = success ? '&#10004;' : '&#10008;'; // Checkmark or X
+            paymentStatusMessage.textContent = message;
+            paymentStatusOverlay.style.display = 'flex';
+        }
+
+        paymentStatusCloseButton.addEventListener('click', () => {
+            paymentStatusOverlay.style.display = 'none';
+            renderDashboard(); // Go back to dashboard after closing status
+        });
+
         // --- Data Persistence and Loading (Updated to use fetch API) ---
         async function loadData() {
             try {
@@ -425,6 +226,7 @@
                 users = data.users || [];
                 lands = data.lands || [];
                 govConfig = data.govConfig || { gap: 10, landType: 'Government' };
+                governmentBalance = data.governmentBalance || 0;
             } catch (e) {
                 console.error("Could not load data from API", e);
                 showMessage(dashboardMessages, 'Failed to load data from the server. Please check the API URL.', 'error');
@@ -436,7 +238,7 @@
                 const response = await fetch(`${API_URL}/data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ users, lands, govConfig })
+                    body: JSON.stringify({ users, lands, govConfig, governmentBalance })
                 });
                 if (!response.ok) {
                     throw new Error(`Failed to save data to API. Status: ${response.status}`);
@@ -541,7 +343,7 @@
         function renderDashboard() {
             if (!currentUser) return;
             setView('dashboard-view');
-            dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}`;
+            dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}! Balance: $${currentUser.wallet.toFixed(2)}`;
             
             // Check for government access
             govPanelButton.style.display = currentUser.minecraftName.toLowerCase() === 'minecraft2613' ? 'block' : 'none';
@@ -573,7 +375,7 @@
                         document.getElementById('calc-base-cost').textContent = calculatedDetails.baseCost.toFixed(2);
                         document.getElementById('calc-tax').textContent = calculatedDetails.tax.toFixed(2);
                         document.getElementById('calc-gst').textContent = calculatedDetails.gst.toFixed(2);
-                        liveCalculationCard.querySelector('h4 span').textContent = calculatedDetails.cost.toFixed(2);
+                        document.getElementById('calc-total-cost').textContent = calculatedDetails.cost.toFixed(2);
                     } else {
                         liveCalculationCard.style.display = 'none';
                     }
@@ -588,6 +390,7 @@
             // Populate settings form with current values
             document.getElementById('gov-gap').value = govConfig.gap;
             document.getElementById('gov-land-type').value = govConfig.landType;
+            document.getElementById('gov-balance').textContent = governmentBalance.toFixed(2);
             
             // Render owner buttons
             const allOwners = [...new Set(lands.map(land => land.owner))];
@@ -613,6 +416,8 @@
                     <ul>
                         ${land.coords.map(c => `<li>(${c.x}, ${c.y}, ${c.z})</li>`).join('')}
                     </ul>
+                    ${land.cost > 0 ? `<p>Cost: $<span class="detail-value">${land.cost.toFixed(2)}</span></p>` : ''}
+                    <p>Status: <span class="detail-value">${land.paid ? 'Paid' : 'Pending'}</span></p>
                 </div>
             `;
         }
@@ -633,7 +438,7 @@
             formGrid.innerHTML = html;
         }
 
-        function getFormCoordinates(formElement, count = 4, prefix = 'coord') {
+        function getFormCoordinates(formElement, count = 4, prefix = 'player-coord') {
             const coords = [];
             for (let i = 1; i <= count; i++) {
                 const x = formElement.querySelector(`input[name="${prefix}-x-${i}"]`)?.value;
@@ -661,15 +466,19 @@
                 return;
             }
 
-            const existingUser = users.find(u => u.minecraftName === minecraftName && u.minecraftEdition === minecraftEdition);
+            showLoading('Logging in...');
+            await loadData(); // Load latest data before login
+
+            let existingUser = users.find(u => u.minecraftName === minecraftName && u.minecraftEdition === minecraftEdition);
             if (existingUser) {
                 currentUser = existingUser;
             } else {
-                currentUser = { minecraftName, minecraftEdition, wallet: 1000 };
+                currentUser = { minecraftName, minecraftEdition, wallet: 1000.00 }; // Default starting balance
                 users.push(currentUser);
             }
 
             await saveData();
+            hideLoading();
             renderDashboard();
         });
 
@@ -703,14 +512,24 @@
                     return;
                 }
                 
+                // Check balance before reserving
+                showLoading('Checking balance...');
+                await loadData(); // Get latest data for balance check
+                const updatedCurrentUser = users.find(u => u.minecraftName === currentUser.minecraftName && u.minecraftEdition === currentUser.minecraftEdition);
+                if (updatedCurrentUser) {
+                    currentUser.wallet = updatedCurrentUser.wallet; // Update current user's wallet
+                }
+
                 if (calculatedDetails.cost > currentUser.wallet) {
-                    showMessage(buyLandMessages, 'You do not have enough money to purchase this land.', 'error');
+                    hideLoading();
+                    showPaymentStatus(false, `Insufficient funds! You need $${(calculatedDetails.cost - currentUser.wallet).toFixed(2)} more.`);
                     return;
                 }
 
                 const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
                 const isCollision = isColliding(newCoords, lands, 'Player', PLAYER_PLOT_GAP);
                 if (isCollision) {
+                    hideLoading();
                     return;
                 }
 
@@ -729,7 +548,9 @@
 
                 lands.push(newLand);
                 
+                showLoading('Reserving land...');
                 await saveData();
+                hideLoading();
 
                 document.getElementById('payment-code').textContent = paymentCode;
                 document.getElementById('payment-amount').textContent = calculatedDetails.cost.toFixed(2);
@@ -737,17 +558,16 @@
 
                 showMessage(buyLandMessages, 'Land reserved! Please complete the payment in-game.', 'success');
 
+                startCountdown(300); // 5 minutes in seconds
+
             } catch (error) {
                 console.error("Buy land submission error:", error);
-                showMessage(buyLandMessages, 'An error occurred while processing your request.', 'error');
+                hideLoading();
+                showPaymentStatus(false, 'An error occurred during reservation.');
             } finally {
                 button.disabled = false;
             }
         });
-
-        function generatePaymentCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
-        }
 
         govSettingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -797,7 +617,10 @@
                     blocks: calculatedDetails.blocks,
                     cost: 0,
                     gap: govConfig.gap,
-                    landType: govConfig.landType
+                    landType: govConfig.landType,
+                    paymentCode: null, // Government lands don't need payment codes
+                    purchaseTime: new Date().getTime(),
+                    paid: true // Government lands are considered paid immediately
                 };
 
                 lands.push(newLand);
@@ -819,6 +642,53 @@
             }
         });
         
+        function generatePaymentCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        let countdownInterval;
+
+        function startCountdown(duration) {
+            let timer = duration;
+            const countdownElement = document.getElementById('countdown');
+            const paymentWarning = document.getElementById('payment-warning');
+
+            clearInterval(countdownInterval);
+
+            countdownInterval = setInterval(() => {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                countdownElement.textContent = minutes + ":" + seconds;
+
+                if (timer <= 60) { // Warn when 1 minute or less remains
+                    paymentWarning.style.display = 'block';
+                } else {
+                    paymentWarning.style.display = 'none';
+                }
+
+                if (--timer < 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.textContent = "EXPIRED";
+                    paymentWarning.textContent = "Payment code has expired!";
+                    paymentWarning.style.display = 'block';
+                    // Optionally disable payment section or clear code
+                }
+            }, 1000);
+        }
+
+        document.getElementById('copy-code-button').addEventListener('click', () => {
+            const paymentCode = document.getElementById('payment-code').textContent;
+            navigator.clipboard.writeText(`/land payment ${paymentCode}`).then(() => {
+                alert('Command copied to clipboard!');
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
             await loadData();
             if (currentUser) {
