@@ -343,7 +343,7 @@
         function renderDashboard() {
             if (!currentUser) return;
             setView('dashboard-view');
-            dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}! Balance: $${currentUser.wallet.toFixed(2)}`;
+            dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}!`; // Removed balance display
             
             // Check for government access
             govPanelButton.style.display = currentUser.minecraftName.toLowerCase() === 'minecraft2613' ? 'block' : 'none';
@@ -512,19 +512,7 @@
                     return;
                 }
                 
-                // Check balance before reserving
-                showLoading('Checking balance...');
-                await loadData(); // Get latest data for balance check
-                const updatedCurrentUser = users.find(u => u.minecraftName === currentUser.minecraftName && u.minecraftEdition === currentUser.minecraftEdition);
-                if (updatedCurrentUser) {
-                    currentUser.wallet = updatedCurrentUser.wallet; // Update current user's wallet
-                }
-
-                if (calculatedDetails.cost > currentUser.wallet) {
-                    hideLoading();
-                    showPaymentStatus(false, `Insufficient funds! You need $${(calculatedDetails.cost - currentUser.wallet).toFixed(2)} more.`);
-                    return;
-                }
+                // Removed balance check from web
 
                 const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
                 const isCollision = isColliding(newCoords, lands, 'Player', PLAYER_PLOT_GAP);
