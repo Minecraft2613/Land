@@ -313,6 +313,12 @@
                     <button type="submit" class="button login-button">Submit & Purchase</button>
                 </form>
                 <div id="buy-land-messages" class="messages"></div>
+                <div id="payment-section" class="land-card" style="display: none; margin-top: 20px;">
+                    <h3>Complete Your Purchase In-Game</h3>
+                    <p>Your land has been reserved. To complete the purchase, use the following command in-game within the next 5 minutes:</p>
+                    <p><code>/land payment <span id="payment-code"></span></code></p>
+                    <p>Amount: $<span id="payment-amount"></span></p>
+                </div>
             </div>
         </section>
 
@@ -399,6 +405,9 @@
         function showMessage(element, message, type = 'success') {
             element.textContent = message;
             element.className = `messages ${type === 'success' ? 'message-success' : 'message-error'}`;
+            if (type === 'success') {
+                element.classList.add('animate');
+            }
             setTimeout(() => {
                 element.textContent = '';
                 element.className = 'messages';
@@ -466,29 +475,46 @@
             return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
         };
 
-        const isColliding = (newPlotCoords, existingPlots, gap) => {
+        const isColliding = (newPlotCoords, existingPlots, newPlotType, newPlotGap) => {
             const numericNewPlotCoords = newPlotCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
             const newMinX = Math.min(...numericNewPlotCoords.map(c => c.x));
             const newMaxX = Math.max(...numericNewPlotCoords.map(c => c.x));
             const newMinZ = Math.min(...numericNewPlotCoords.map(c => c.z));
             const newMaxZ = Math.max(...numericNewPlotCoords.map(c => c.z));
 
-            const newPlotWithGapMinX = newMinX - gap;
-            const newPlotWithGapMaxX = newMaxX + gap;
-            const newPlotWithGapMinZ = newMinZ - gap;
-            const newPlotWithGapMaxZ = newMaxZ + gap;
-
             for (const existingPlot of existingPlots) {
-                const existingGap = existingPlot.gap;
                 const existingMinX = Math.min(...existingPlot.coords.map(c => c.x));
                 const existingMaxX = Math.max(...existingPlot.coords.map(c => c.x));
                 const existingMinZ = Math.min(...existingPlot.coords.map(c => c.z));
                 const existingMaxZ = Math.max(...existingPlot.coords.map(c => c.z));
 
-                const existingPlotWithGapMinX = existingMinX - existingGap;
-                const existingPlotWithGapMaxX = existingMaxX + existingGap;
-                const existingPlotWithGapMinZ = existingMinZ - existingGap;
-                const existingPlotWithGapMaxZ = existingMaxZ + existingGap;
+                let effectiveNewPlotGap = 0;
+                let effectiveExistingPlotGap = 0;
+
+                // Determine effective gap based on plot types
+                if (newPlotType === 'Player' && existingPlot.landType === 'Player') {
+                    effectiveNewPlotGap = newPlotGap;
+                    effectiveExistingPlotGap = existingPlot.gap;
+                } else if (newPlotType === 'Player' && existingPlot.landType !== 'Player') { // Player vs Gov
+                    effectiveNewPlotGap = newPlotGap;
+                    effectiveExistingPlotGap = existingPlot.gap;
+                } else if (newPlotType !== 'Player' && existingPlot.landType === 'Player') { // Gov vs Player
+                    effectiveNewPlotGap = newPlotGap;
+                    effectiveExistingPlotGap = existingPlot.gap;
+                } else if (newPlotType !== 'Player' && existingPlot.landType !== 'Player') { // Gov vs Gov
+                    effectiveNewPlotGap = 0; // No gap for government plots
+                    effectiveExistingPlotGap = 0; // No gap for government plots
+                }
+
+                const newPlotWithGapMinX = newMinX - effectiveNewPlotGap;
+                const newPlotWithGapMaxX = newMaxX + effectiveNewPlotGap;
+                const newPlotWithGapMinZ = newMinZ - effectiveNewPlotGap;
+                const newPlotWithGapMaxZ = newMaxZ + effectiveNewPlotGap;
+
+                const existingPlotWithGapMinX = existingMinX - effectiveExistingPlotGap;
+                const existingPlotWithGapMaxX = existingMaxX + effectiveExistingPlotGap;
+                const existingPlotWithGapMinZ = existingMinZ - effectiveExistingPlotGap;
+                const existingPlotWithGapMaxZ = existingMaxZ + effectiveExistingPlotGap;
 
                 // Check for overlap on the X-axis
                 const overlapX = Math.max(newPlotWithGapMinX, existingPlotWithGapMinX) < Math.min(newPlotWithGapMaxX, existingPlotWithGapMaxX);
@@ -496,7 +522,7 @@
                 const overlapZ = Math.max(newPlotWithGapMinZ, existingPlotWithGapMinZ) < Math.min(newPlotWithGapMaxZ, existingPlotWithGapMaxZ);
 
                 if (overlapX && overlapZ) {
-                    showMessage(buyLandMessages, `Collision detected with an existing plot owned by ${existingPlot.owner}! Please choose a different location.`, 'error');
+                    showMessage(buyLandMessages, `Collision detected with an existing plot owned by ${existingPlot.owner} (${existingPlot.landType} land)! Please choose a different location.`, 'error');
                     return true;
                 }
             }
@@ -683,26 +709,33 @@
                 }
 
                 const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
-                const isCollision = isColliding(newCoords, lands, PLAYER_PLOT_GAP);
+                const isCollision = isColliding(newCoords, lands, 'Player', PLAYER_PLOT_GAP);
                 if (isCollision) {
                     return;
                 }
 
+                const paymentCode = generatePaymentCode();
                 const newLand = {
                     owner: currentUser.minecraftName,
                     coords: newCoords,
                     blocks: calculatedDetails.blocks,
                     cost: calculatedDetails.cost,
                     gap: PLAYER_PLOT_GAP,
-                    landType: 'Player'
+                    landType: 'Player',
+                    paymentCode: paymentCode,
+                    purchaseTime: new Date().getTime(),
+                    paid: false
                 };
 
                 lands.push(newLand);
-                currentUser.wallet -= calculatedDetails.cost;
                 
                 await saveData();
-                showMessage(buyLandMessages, `Successfully purchased a new plot! Total cost was $${calculatedDetails.cost.toFixed(2)}.`, 'success');
-                renderBuyLand();
+
+                document.getElementById('payment-code').textContent = paymentCode;
+                document.getElementById('payment-amount').textContent = calculatedDetails.cost.toFixed(2);
+                document.getElementById('payment-section').style.display = 'block';
+
+                showMessage(buyLandMessages, 'Land reserved! Please complete the payment in-game.', 'success');
 
             } catch (error) {
                 console.error("Buy land submission error:", error);
@@ -711,6 +744,10 @@
                 button.disabled = false;
             }
         });
+
+        function generatePaymentCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
 
         govSettingsForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -749,7 +786,7 @@
                 }
 
                 const newCoords = govCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
-                const isCollision = isColliding(newCoords, lands, govConfig.gap);
+                const isCollision = isColliding(newCoords, lands, govConfig.landType, govConfig.gap);
                 if (isCollision) {
                     return;
                 }
@@ -793,4 +830,3 @@
     </script>
 </body>
 </html>
-s
