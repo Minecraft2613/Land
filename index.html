@@ -70,7 +70,12 @@
                 <div id="buy-land-messages" class="messages"></div>
                 <div id="payment-section" class="land-card" style="display: none; margin-top: 20px;">
                     <h3>Complete Your Purchase In-Game</h3>
-                    <p>Your land has been reserved. To complete the purchase, use the following command in-game within the next <span id="countdown">5:00</span> minutes:</p>
+                    <div class="gpay-timer-container">
+                        <div class="gpay-circle">
+                            <span id="countdown">5:00</span>
+                        </div>
+                    </div>
+                    <p>Your land has been reserved. Use the following command in-game:</p>
                     <p><code>/land payment <span id="payment-code"></span> <button id="copy-code-button">Copy</button></code></p>
                     <p>Amount: $<span id="payment-amount"></span></p>
                     <p class="messages message-error" id="payment-warning" style="display: none;">Warning: Payment code will expire soon!</p>
@@ -110,6 +115,14 @@
                     </div>
                 </div>
                 <div id="gov-panel-messages" class="messages"></div>
+                <div class="land-card" style="margin-top: 20px;">
+                    <h3>Government Balance</h3>
+                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
+                </div>
+                <div class="land-card" style="margin-top: 20px;">
+                    <h3>Government Balance</h3>
+                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
+                </div>
                 <div class="land-card" style="margin-top: 20px;">
                     <h3>Government Balance</h3>
                     <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
