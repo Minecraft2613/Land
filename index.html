@@ -357,7 +357,8 @@
         // Constants
         const MAX_PLAYER_LAND_BLOCKS = 14400;
         const PLAYER_PLOT_GAP = 7;
-        const API_URL = 'https://land.1987sakshamsingh.workers.dev/';
+        // IMPORTANT: Replace this with the URL of your deployed Cloudflare Worker
+        const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
         // Global state variables
         let currentUser = null;
@@ -400,7 +401,7 @@
         // --- Data Persistence and Loading (Updated to use fetch API) ---
         async function loadData() {
             try {
-                const response = await fetch('/data');
+                const response = await fetch(`${API_URL}/data`);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch data from API. Status: ${response.status}`);
                 }
@@ -416,7 +417,7 @@
 
         async function saveData() {
             try {
-                const response = await fetch('/data', {
+                const response = await fetch(`${API_URL}/data`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ users, lands, govConfig })
