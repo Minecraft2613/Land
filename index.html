@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Land Registry</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+        
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-light: #e0e0e0;
+            --text-dark: #8c8c8c;
+            --primary-color: #4CAF50;
+            --secondary-color: #FF5722;
+            --accent-color: #2196F3;
+            --input-bg: #2c2c2c;
+            --border-color: #424242;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+        
+        .app-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            color: var(--primary-color);
+        }
+
+        .app-header .button {
+            padding: 10px 20px;
+            font-size: 1em;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .app-header .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .logout-button {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .view-section {
+            display: none;
+            padding: 20px;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: var(--bg-card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        h2 {
+            font-size: 2em;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--text-light);
+            font-size: 1em;
+            transition: border-color 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .login-button {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .login-button:hover {
+            background-color: #66bb6a;
+            transform: translateY(-2px);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .nav-buttons .button {
+            flex-grow: 1;
+            padding: 15px;
+            font-size: 1.1em;
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .nav-buttons .button:hover {
+            background-color: #42a5f5;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .land-card {
+            background-color: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+        }
+
+        .land-card h3 {
+            margin-top: 0;
+            font-size: 1.5em;
+            color: var(--accent-color);
+        }
+        
+        .land-card p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: var(--text-dark);
+        }
+        
+        .land-card .detail-value {
+            color: var(--text-light);
+            font-weight: 700;
+        }
+
+        .land-card ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-top: 10px;
+        }
+
+        .land-card ul li {
+            padding: 5px 0;
+            font-size: 0.9em;
+            color: var(--text-dark);
+        }
+        
+        .messages {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .message-success {
+            background-color: var(--primary-color);
+            color: var(--bg-dark);
+        }
+
+        .message-error {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .app-header h1 {
+                margin-bottom: 10px;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Login Page -->
+        <section id="login-view" class="view-section active">
+            <div class="form-container">
+                <h2>Minecraft Land Registry</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="edition">Minecraft Edition</label>
+                        <select id="edition" name="edition">
+                            <option value="Java">Java</option>
+                            <option value="Bedrock">Bedrock</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Minecraft Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <button type="submit" class="button login-button">Login</button>
+                </form>
+                <div id="messages" class="messages"></div>
+            </div>
+        </section>
+
+        <!-- Dashboard Page -->
+        <section id="dashboard-view" class="view-section">
+            <header class="app-header">
+                <h1 id="dashboard-title"></h1>
+                <button id="logout-button" class="button logout-button">Logout</button>
+            </header>
+            <div class="nav-buttons">
+                <button id="buy-land-button" class="button">Buy New Land</button>
+                <button id="gov-panel-button" class="button" style="display: none;">Government Panel</button>
+            </div>
+            <h3 style="margin-bottom: 20px;">Your Purchased Lands</h3>
+            <div id="user-lands-list" class="card-grid"></div>
+            <div id="dashboard-messages" class="messages"></div>
+        </section>
+
+        <!-- Buy Land Page -->
+        <section id="buy-land-view" class="view-section">
+            <header class="app-header">
+                <h1>Buy New Land</h1>
+                <button id="back-from-buy-button" class="button logout-button">Back</button>
+            </header>
+            <div class="form-container">
+                <form id="buy-land-form">
+                    <div class="form-grid">
+                        <!-- Coordinates will be generated here -->
+                    </div>
+                    <div id="live-calculation-card" class="land-card" style="display: none; margin-bottom: 20px;">
+                        <h3>Live Calculation</h3>
+                        <p>Blocks: <span id="calc-blocks" class="detail-value">0</span></p>
+                        <p>Base Cost: $<span id="calc-base-cost" class="detail-value">0.00</span></p>
+                        <p>10% Tax: $<span id="calc-tax" class="detail-value">0.00</span></p>
+                        <p>3% GST: $<span id="calc-gst" class="detail-value">0.00</span></p>
+                        <h4 style="margin-top: 15px;">Total Cost: $<span class="detail-value">${(0).toFixed(2)}</span></h4>
+                    </div>
+                    <button type="submit" class="button login-button">Submit & Purchase</button>
+                </form>
+                <div id="buy-land-messages" class="messages"></div>
+            </div>
+        </section>
+
+        <!-- Government Panel Page -->
+        <section id="gov-panel-view" class="view-section">
+            <header class="app-header">
+                <h1>Government Panel</h1>
+                <button id="back-from-gov-button" class="button logout-button">Back</button>
+            </header>
+            <div class="form-container" style="max-width: 800px;">
+                <div class="card-grid">
+                    <div class="land-card">
+                        <h3>Government Settings</h3>
+                        <form id="gov-settings-form">
+                            <div class="form-group">
+                                <label for="gov-gap">Government Plot Gap (Blocks)</label>
+                                <input type="number" id="gov-gap" name="gov-gap" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="gov-land-type">Type of Land</label>
+                                <input type="text" id="gov-land-type" name="gov-land-type" required>
+                            </div>
+                            <button type="submit" class="button login-button">Save Settings</button>
+                        </form>
+                    </div>
+
+                    <div class="land-card">
+                        <h3>Register Government Land</h3>
+                        <form id="register-gov-land-form">
+                            <!-- Coords will be generated here -->
+                        </form>
+                        <button type="submit" class="button login-button">Register Land</button>
+                    </div>
+                </div>
+                <div id="gov-panel-messages" class="messages"></div>
+            </div>
+            
+            <h3 style="margin-top: 30px; margin-bottom: 20px;">Player Plot Management</h3>
+            <div id="player-management-section">
+                <div id="owner-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;"></div>
+                <div id="selected-player-plots" class="card-grid"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Constants
+        const MAX_PLAYER_LAND_BLOCKS = 14400;
+        const PLAYER_PLOT_GAP = 7;
+        const API_URL = '';
+
+        // Global state variables
+        let currentUser = null;
+        let users = [];
+        let lands = [];
+        let govConfig = { gap: 10, landType: 'Government' };
+        let selectedPlayerForManagement = null;
+
+        // DOM elements
+        const views = document.querySelectorAll('.view-section');
+        const loginForm = document.getElementById('login-form');
+        const logoutButton = document.getElementById('logout-button');
+        const dashboardTitle = document.getElementById('dashboard-title');
+        const userLandsList = document.getElementById('user-lands-list');
+        const buyLandButton = document.getElementById('buy-land-button');
+        const govPanelButton = document.getElementById('gov-panel-button');
+        const backFromBuyButton = document.getElementById('back-from-buy-button');
+        const backFromGovButton = document.getElementById('back-from-gov-button');
+        const buyLandForm = document.getElementById('buy-land-form');
+        const govSettingsForm = document.getElementById('gov-settings-form');
+        const registerGovLandForm = document.getElementById('register-gov-land-form');
+        const ownerButtonsContainer = document.getElementById('owner-buttons');
+        const selectedPlayerPlotsContainer = document.getElementById('selected-player-plots');
+        
+        // Message displays
+        const loginMessages = document.getElementById('messages');
+        const dashboardMessages = document.getElementById('dashboard-messages');
+        const buyLandMessages = document.getElementById('buy-land-messages');
+        const govPanelMessages = document.getElementById('gov-panel-messages');
+
+        function showMessage(element, message, type = 'success') {
+            element.textContent = message;
+            element.className = `messages ${type === 'success' ? 'message-success' : 'message-error'}`;
+            setTimeout(() => {
+                element.textContent = '';
+                element.className = 'messages';
+            }, 5000);
+        }
+
+        // --- Data Persistence and Loading (Updated to use fetch API) ---
+        async function loadData() {
+            try {
+                const response = await fetch('/data');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch data from API. Status: ${response.status}`);
+                }
+                const data = await response.json();
+                users = data.users || [];
+                lands = data.lands || [];
+                govConfig = data.govConfig || { gap: 10, landType: 'Government' };
+            } catch (e) {
+                console.error("Could not load data from API", e);
+                showMessage(dashboardMessages, 'Failed to load data from the server. Please check the API URL.', 'error');
+            }
+        }
+
+        async function saveData() {
+            try {
+                const response = await fetch('/data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ users, lands, govConfig })
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to save data to API. Status: ${response.status}`);
+                }
+                const result = await response.json();
+                console.log('Data saved:', result);
+            } catch (e) {
+                console.error("Could not save data to API", e);
+                showMessage(dashboardMessages, 'Failed to save data to the server. Please check the API URL.', 'error');
+            }
+        }
+
+        // --- Utility Functions ---
+        const calculatePlotDetails = (coords) => {
+            const numericCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+
+            if (numericCoords.some(c => isNaN(c.x) || isNaN(c.y) || isNaN(c.z))) {
+                return { blocks: 0, cost: 0, baseCost: 0, tax: 0, gst: 0, isValid: false };
+            }
+
+            const minX = Math.min(...numericCoords.map(c => c.x));
+            const maxX = Math.max(...numericCoords.map(c => c.x));
+            const minZ = Math.min(...numericCoords.map(c => c.z));
+            const maxZ = Math.max(...numericCoords.map(c => c.z));
+
+            const blockWidth = Math.abs(maxX - minX) + 1;
+            const blockDepth = Math.abs(maxZ - minZ) + 1;
+            const totalBlocks = blockWidth * blockDepth;
+
+            const baseCost = totalBlocks * 10;
+            const tax = baseCost * 0.10;
+            const gst = baseCost * 0.03;
+            const totalCost = baseCost + tax + gst;
+
+            return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
+        };
+
+        const isColliding = (newPlotCoords, existingPlots, gap) => {
+            const numericNewPlotCoords = newPlotCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+
+            const newMinX = Math.min(...numericNewPlotCoords.map(c => c.x));
+            const newMaxX = Math.max(...numericNewPlotCoords.map(c => c.x));
+            const newMinZ = Math.min(...numericNewPlotCoords.map(c => c.z));
+            const newMaxZ = Math.max(...numericNewPlotCoords.map(c => c.z));
+            
+            const newPlotWithGapMinX = newMinX - gap;
+            const newPlotWithGapMaxX = newMaxX + gap;
+            const newPlotWithGapMinZ = newMinZ - gap;
+            const newPlotWithGapMaxZ = newMaxZ + gap;
+
+            for (const existingPlot of existingPlots) {
+                const existingGap = existingPlot.gap;
+                const existingMinX = Math.min(...existingPlot.coords.map(c => c.x));
+                const existingMaxX = Math.max(...existingPlot.coords.map(c => c.x));
+                const existingMinZ = Math.min(...existingPlot.coords.map(c => c.z));
+                const existingMaxZ = Math.max(...existingPlot.coords.map(c => c.z));
+                
+                const existingPlotWithGapMinX = existingMinX - existingGap;
+                const existingPlotWithGapMaxX = existingMaxX + existingGap;
+                const existingPlotWithGapMinZ = existingMinZ - existingGap;
+                const existingPlotWithGapMaxZ = existingMaxZ + existingGap;
+
+                const xOverlap = Math.max(0, Math.min(newPlotWithGapMaxX, existingPlotWithGapMaxX) - Math.max(newPlotWithGapMinX, existingPlotWithGapMinX));
+                const zOverlap = Math.max(0, Math.min(newPlotWithGapMaxZ, existingPlotWithGapMaxZ) - Math.max(newPlotWithGapMinZ, existingPlotWithGapMinZ));
+
+                if (xOverlap > 0 && zOverlap > 0) {
+                    showMessage(buyLandMessages, `Land is occupied by ${existingPlot.landType} owned by: ${existingPlot.owner}`, 'error');
+                    return true;
+                }
+            }
+            return false;
+        };
+        
+        // Function to switch between views
+        function setView(viewId) {
+            views.forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // --- Render Functions ---
+        function renderLandCard(land, index) {
+            return `
+                <div class="land-card">
+                    <h3>Plot #${index + 1}</h3>
+                    <p>Owner: <span class="detail-value">${land.owner}</span></p>
+                    <p>Land Type: <span class="detail-value">${land.landType}</span></p>
+                    <p>Gap: <span class="detail-value">${land.gap} blocks</span></p>
+                    <p>Coordinates:</p>
+                    <ul>
+                        ${land.coords.map(coord => `<li>(${coord.x}, ${coord.y}, ${coord.z})</li>`).join('')}
+                    </ul>
+                    <p>Total Blocks: <span class="detail-value">${land.blocks}</span></p>
+                    ${land.cost ? `<p>Total Cost: $<span class="detail-value">${land.cost.toFixed(2)}</span></p>` : ''}
+                </div>
+            `;
+        }
+
+        async function renderDashboard() {
+            if (!currentUser) {
+                setView('login-view');
+                return;
+            }
+            await loadData();
+            dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}!`;
+            govPanelButton.style.display = (currentUser.minecraftName === 'ansh' && currentUser.edition === 'Java') ? 'block' : 'none';
+
+            const userLands = lands.filter(land => land.owner === currentUser.minecraftName);
+            userLandsList.innerHTML = userLands.length === 0 
+                ? '<p>You haven\'t purchased any land yet. Click "Buy New Land" to get started!</p>'
+                : userLands.map(renderLandCard).join('');
+
+            setView('dashboard-view');
+        }
+
+        function renderBuyLand() {
+            const formGrid = document.createElement('div');
+            formGrid.className = 'form-grid';
+            formGrid.innerHTML = Array.from({ length: 4 }).map((_, index) => `
+                <div class="land-card" style="margin-bottom: 20px;">
+                    <h3>Coord #${index + 1}</h3>
+                    <div class="form-group">
+                        <label for="x${index}">X</label>
+                        <input type="number" id="x${index}" name="x${index}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="y${index}">Y</label>
+                        <input type="number" id="y${index}" name="y${index}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="z${index}">Z</label>
+                        <input type="number" id="z${index}" name="z${index}" required>
+                    </div>
+                </div>
+            `).join('');
+            buyLandForm.insertBefore(formGrid, buyLandForm.querySelector('.button'));
+            
+            const inputs = buyLandForm.querySelectorAll('input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateLiveCalculation);
+            });
+
+            setView('buy-land-view');
+        }
+
+        function updateLiveCalculation() {
+            const coords = Array.from({ length: 4 }).map((_, index) => ({
+                x: document.getElementById(`x${index}`).value,
+                y: document.getElementById(`y${index}`).value,
+                z: document.getElementById(`z${index}`).value,
+            }));
+
+            const details = calculatePlotDetails(coords);
+            const calcCard = document.getElementById('live-calculation-card');
+
+            if (details.isValid) {
+                document.getElementById('calc-blocks').textContent = details.blocks;
+                document.getElementById('calc-base-cost').textContent = details.baseCost.toFixed(2);
+                document.getElementById('calc-tax').textContent = details.tax.toFixed(2);
+                document.getElementById('calc-gst').textContent = details.gst.toFixed(2);
+                document.getElementById('calc-total-cost').textContent = details.cost.toFixed(2);
+                calcCard.style.display = 'block';
+            } else {
+                calcCard.style.display = 'none';
+            }
+        }
+
+        async function renderGovPanel() {
+            await loadData();
+            document.getElementById('gov-gap').value = govConfig.gap;
+            document.getElementById('gov-land-type').value = govConfig.landType;
+            
+            registerGovLandForm.innerHTML = Array.from({ length: 4 }).map((_, index) => `
+                <div class="land-card" style="margin-bottom: 20px;">
+                    <h3>Coord #${index + 1}</h3>
+                    <div class="form-group">
+                        <label for="gov-x${index}">X</label>
+                        <input type="number" id="gov-x${index}" name="gov-x${index}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gov-y${index}">Y</label>
+                        <input type="number" id="gov-y${index}" name="gov-y${index}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gov-z${index}">Z</label>
+                        <input type="number" id="gov-z${index}" name="gov-z${index}" required>
+                    </div>
+                </div>
+            `).join('');
+
+            const uniqueOwners = [...new Set(lands.map(land => land.owner))];
+            ownerButtonsContainer.innerHTML = uniqueOwners.map(owner => `
+                <button class="button" data-owner="${owner}">${owner}</button>
+            `).join('');
+            selectedPlayerPlotsContainer.innerHTML = '';
+
+            setView('gov-panel-view');
+        }
+
+        function displayPlayerPlots(owner) {
+            selectedPlayerForManagement = owner;
+            const playerPlots = lands.filter(land => land.owner === owner);
+            selectedPlayerPlotsContainer.innerHTML = playerPlots.map(renderLandCard).join('');
+        }
+
+        // --- Event Handlers ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const edition = document.getElementById('edition').value;
+
+            if (!name) {
+                showMessage(loginMessages, 'Minecraft name is required.', 'error');
+                return;
+            }
+
+            let minecraftName = name.toLowerCase().trim();
+            if (edition === 'Bedrock' && !minecraftName.startsWith('.')) {
+                minecraftName = `.${minecraftName}`;
+            }
+
+            await loadData();
+            const existingUser = users.find(u => u.minecraftName === minecraftName);
+            if (existingUser) {
+                currentUser = existingUser;
+                showMessage(loginMessages, `Welcome back, ${currentUser.minecraftName}!`, 'success');
+            } else {
+                const newUser = { minecraftName, edition, contact: {} };
+                users.push(newUser);
+                currentUser = newUser;
+                showMessage(loginMessages, `Hello, ${currentUser.minecraftName}! Your new profile has been created.`, 'success');
+            }
+            await saveData();
+
+            if (minecraftName === 'ansh' && edition === 'Java') {
+                renderGovPanel();
+            } else {
+                renderDashboard();
+            }
+        });
+
+        logoutButton.addEventListener('click', () => {
+            currentUser = null;
+            setView('login-view');
+            showMessage(loginMessages, 'You have been logged out.', 'success');
+        });
+
+        buyLandButton.addEventListener('click', renderBuyLand);
+        govPanelButton.addEventListener('click', renderGovPanel);
+        backFromBuyButton.addEventListener('click', renderDashboard);
+        backFromGovButton.addEventListener('click', renderDashboard);
+
+        buyLandForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const coords = Array.from({ length: 4 }).map((_, index) => ({
+                x: document.getElementById(`x${index}`).value,
+                y: document.getElementById(`y${index}`).value,
+                z: document.getElementById(`z${index}`).value,
+            }));
+
+            const calculatedDetails = calculatePlotDetails(coords);
+            if (!calculatedDetails.isValid) {
+                showMessage(buyLandMessages, 'Please enter valid numeric coordinates for all 4 points.', 'error');
+                return;
+            }
+
+            const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+            const userLands = lands.filter(land => land.owner === currentUser.minecraftName);
+            const totalOwnedBlocks = userLands.reduce((acc, land) => acc + land.blocks, 0);
+
+            if (totalOwnedBlocks + calculatedDetails.blocks > MAX_PLAYER_LAND_BLOCKS) {
+                showMessage(buyLandMessages, `You have exceeded the maximum land purchase limit of ${MAX_PLAYER_LAND_BLOCKS} blocks.`, 'error');
+                return;
+            }
+
+            const gap = PLAYER_PLOT_GAP;
+            if (isColliding(newCoords, lands, gap)) {
+                return;
+            }
+
+            const newLand = {
+                owner: currentUser.minecraftName,
+                coords: newCoords,
+                blocks: calculatedDetails.blocks,
+                cost: calculatedDetails.cost,
+                gap,
+                landType: 'Regular'
+            };
+
+            lands.push(newLand);
+            await saveData();
+            showMessage(dashboardMessages, `Successfully purchased land for $${calculatedDetails.cost.toFixed(2)}!`, 'success');
+            renderDashboard();
+        });
+
+        govSettingsForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newGap = parseInt(document.getElementById('gov-gap').value);
+            const newLandType = document.getElementById('gov-land-type').value;
+
+            if (isNaN(newGap) || !newLandType) {
+                showMessage(govPanelMessages, 'Please enter valid settings.', 'error');
+                return;
+            }
+
+            govConfig.gap = newGap;
+            govConfig.landType = newLandType;
+            await saveData();
+            showMessage(govPanelMessages, 'Government settings saved successfully!', 'success');
+        });
+
+        document.getElementById('register-gov-land-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const govCoords = Array.from({ length: 4 }).map((_, index) => ({
+                x: document.getElementById(`gov-x${index}`).value,
+                y: document.getElementById(`gov-y${index}`).value,
+                z: document.getElementById(`gov-z${index}`).value,
+            }));
+
+            const calculatedDetails = calculatePlotDetails(govCoords);
+            if (!calculatedDetails.isValid) {
+                showMessage(govPanelMessages, 'Please enter valid numeric coordinates for all 4 points.', 'error');
+                return;
+            }
+
+            const newCoords = govCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+            const isCollision = isColliding(newCoords, lands, govConfig.gap);
+            if (isCollision) {
+                return;
+            }
+
+            const newLand = {
+                owner: currentUser.minecraftName,
+                coords: newCoords,
+                blocks: calculatedDetails.blocks,
+                cost: 0,
+                gap: govConfig.gap,
+                landType: govConfig.landType
+            };
+
+            lands.push(newLand);
+            await saveData();
+            showMessage(govPanelMessages, `Successfully registered new government land: ${govConfig.landType}!`, 'success');
+            renderGovPanel();
+        });
+
+        ownerButtonsContainer.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (button && button.dataset.owner) {
+                displayPlayerPlots(button.dataset.owner);
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadData();
+            if (currentUser) {
+                renderDashboard();
+            } else {
+                setView('login-view');
+            }
+        });
+    </script>
+</body>
+</html>
