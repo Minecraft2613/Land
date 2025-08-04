@@ -6,7 +6,40 @@
       "wallet": 1000
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 11,
+          "y": 11,
+          "z": 1
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 11,
+          "y": 11,
+          "z": 1111
+        }
+      ],
+      "blocks": 1111,
+      "cost": 12554.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "4GYIRZ",
+      "purchaseTime": 1754323777080,
+      "paid": false
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
