@@ -1,8 +1,42 @@
- {
-             "users": [],
-               "lands": [],
-               "govConfig": {
-                   "gap": 10,
-                   "landType": "Government"
-              }
-            }
+{
+  "users": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 111,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 111
+        },
+        {
+          "x": null,
+          "y": null,
+          "z": null
+        },
+        {
+          "x": null,
+          "y": null,
+          "z": null
+        }
+      ],
+      "blocks": 12321,
+      "cost": 139227.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "KOTS0Q",
+      "purchaseTime": 1754391678943,
+      "paid": false
+    }
+  ],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  },
+  "governmentBalance": 0
+}
