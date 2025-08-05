@@ -61,31 +61,6 @@
       "paymentCode": "YO0DD7",
       "purchaseTime": 1754395905517,
       "paid": true
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 333,
-          "y": 1,
-          "z": 333
-        },
-        {
-          "x": 333,
-          "y": 1,
-          "z": 333
-        }
-      ],
-      "blocks": 1,
-      "cost": 11.3,
-      "baseCost": 10,
-      "tax": 1,
-      "gst": 0.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "5V2SQ2",
-      "purchaseTime": 1754405070679,
-      "paid": false
     }
   ],
   "govConfig": {
