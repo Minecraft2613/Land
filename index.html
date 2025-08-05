@@ -184,6 +184,7 @@
         let govConfig = { gap: 10, landType: 'Government' };
         let governmentBalance = 0;
         let selectedPlayerForManagement = null;
+        let paymentSuccessHandled = false; // New flag to prevent multiple success triggers
 
         // DOM elements
         const views = document.querySelectorAll('.view-section');
@@ -284,12 +285,9 @@
                         // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
                         document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                         document.getElementById('payment-loading-overlay').style.display = 'none';
-                        clearInterval(fullscreenCountdownInterval); // Stop the timer if it was running
-                    }
                 }
             } catch (e) {
-                console.error("Could not load data from API", e);
-                showMessage(dashboardMessages, 'Failed to load data from the server. Please check the API URL.', 'error');
+                showMessage(dashboardMessages, 'Failed to load data from the server.', 'error');
             }
         }
 
@@ -304,11 +302,9 @@
                     throw new Error(`Failed to save data to API. Status: ${response.status}`);
                 }
                 const result = await response.json();
-                console.log('Data saved:', result);
                 return result; // Return the result on success
             } catch (e) {
-                console.error("Could not save data to API", e);
-                showMessage(dashboardMessages, 'Failed to save data to the server. Please check the API URL.', 'error');
+                showMessage(dashboardMessages, 'Failed to save data to the server.', 'error');
                 throw e; // Re-throw the error so calling functions know it failed
             }
         }
@@ -646,7 +642,6 @@
                 startFullscreenCountdown(300, paymentCode); // 5 minutes in seconds
 
             } catch (error) {
-                console.error("Buy land submission error:", error);
                 hideLoading();
                 showPaymentStatus(false, 'An error occurred during reservation.');
             } finally {
@@ -719,7 +714,6 @@
                 showMessage(govPanelMessages, `Successfully registered new government land: ${govConfig.landType}!`, 'success');
                 renderGovPanel();
             } catch (error) {
-                console.error("Gov land submission error:", error);
                 showMessage(govPanelMessages, 'An error occurred while processing your request.', 'error');
             } finally {
                 button.disabled = false;
@@ -738,32 +732,23 @@
         }
 
         let fullscreenCountdownInterval;
+        let paymentStatusPollingInterval; // New interval for polling payment status
 
         function startFullscreenCountdown(duration, paymentCode) {
+            paymentSuccessHandled = false; // Reset flag at the start of a new countdown
             let timer = duration;
             const countdownElement = document.getElementById('fullscreen-countdown');
             const innerRing = document.querySelector('.inner-ring');
             const paymentLoadingOverlay = document.getElementById('payment-loading-overlay');
 
             clearInterval(fullscreenCountdownInterval);
+            clearInterval(paymentStatusPollingInterval); // Clear any existing polling interval
 
             // Show the payment loading overlay initially
             paymentLoadingOverlay.style.display = 'flex';
             document.getElementById('loading-message').textContent = 'Waiting for payment confirmation...';
 
-            fullscreenCountdownInterval = setInterval(async () => {
-                // Check payment status from the server
-                await loadData(); // Reload data to get latest land status
-                const currentLand = lands.find(l => l.paymentCode === paymentCode);
-
-                if (currentLand && currentLand.paid) {
-                    clearInterval(fullscreenCountdownInterval);
-                    paymentLoadingOverlay.style.display = 'none';
-                    document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                    showPaymentSuccess();
-                    return;
-                }
-
+            fullscreenCountdownInterval = setInterval(() => {
                 let minutes = parseInt(timer / 60, 10);
                 let seconds = parseInt(timer % 60, 10);
 
@@ -779,23 +764,39 @@
 
                 if (--timer < 0) {
                     clearInterval(fullscreenCountdownInterval);
+                    clearInterval(paymentStatusPollingInterval); // Stop polling when timer runs out
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                     showPaymentStatus(false, 'Timer is run out! Payment code has expired.');
                 }
-            }, 1000);
+            }, 1000); // Timer updates every 1 second
+
+            // Start polling for payment status every 5 seconds
+            paymentStatusPollingInterval = setInterval(async () => {
+                await loadData(); // Load latest data
+                const currentLand = lands.find(l => l.paymentCode === paymentCode);
+
+                if (currentLand && currentLand.paid) {
+                    clearInterval(fullscreenCountdownInterval);
+                    clearInterval(paymentStatusPollingInterval); // Stop polling
+                    paymentLoadingOverlay.style.display = 'none';
+                    document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                    showPaymentSuccess();
+                }
+            }, 5000); // Poll every 5 seconds
 
             document.getElementById('fullscreen-copy-code-button').addEventListener('click', () => {
                 const paymentCode = document.getElementById('fullscreen-payment-code').textContent;
                 navigator.clipboard.writeText(`/land payment ${paymentCode}`).then(() => {
                     alert('Command copied to clipboard!');
-                }).catch(err => {
-                    console.error('Could not copy text: ', err);
+                }).catch(() => {
+                    // Silently fail if clipboard access is denied or fails
                 });
             });
 
             document.getElementById('cancel-payment-button').onclick = async () => {
                 clearInterval(fullscreenCountdownInterval);
+                clearInterval(paymentStatusPollingInterval); // Stop polling on cancel
                 paymentLoadingOverlay.style.display = 'none';
                 document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                 showLoading('Cancelling payment...');
@@ -824,9 +825,9 @@
             const paymentCode = document.getElementById('payment-code').textContent;
             navigator.clipboard.writeText(`/land payment ${paymentCode}`).then(() => {
                 alert('Command copied to clipboard!');
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
+                }).catch(() => {
+                    // Silently fail if clipboard access is denied or fails
+                });
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
