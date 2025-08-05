@@ -60,12 +60,12 @@
       "landType": "Player",
       "paymentCode": "J27W68",
       "purchaseTime": 1754394887456,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1367.3
+  "governmentBalance": 1378.6
 }
