@@ -275,7 +275,7 @@ h2 {
 .inner-ring {
     width: 260px;
     height: 260px;
-    border: 10px solid transparent;
+    border: 10px solid;
     transition: border-color 1s linear;
 }
 
