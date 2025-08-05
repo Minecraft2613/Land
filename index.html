@@ -285,6 +285,7 @@
                         // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
                         document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                         document.getElementById('payment-loading-overlay').style.display = 'none';
+                    }
                 }
             } catch (e) {
                 showMessage(dashboardMessages, 'Failed to load data from the server.', 'error');
