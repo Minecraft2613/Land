@@ -37,12 +37,12 @@
       "landType": "Player",
       "paymentCode": "QFRAGJ",
       "purchaseTime": 1754389167604,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 12441.3
 }
