@@ -703,10 +703,27 @@
             let timer = duration;
             const countdownElement = document.getElementById('fullscreen-countdown');
             const innerRing = document.querySelector('.inner-ring');
+            const paymentLoadingOverlay = document.getElementById('payment-loading-overlay');
 
             clearInterval(fullscreenCountdownInterval);
 
-            fullscreenCountdownInterval = setInterval(() => {
+            // Show the payment loading overlay initially
+            paymentLoadingOverlay.style.display = 'flex';
+            document.getElementById('loading-message').textContent = 'Waiting for payment confirmation...';
+
+            fullscreenCountdownInterval = setInterval(async () => {
+                // Check payment status from the server
+                await loadData(); // Reload data to get latest land status
+                const currentLand = lands.find(l => l.paymentCode === paymentCode);
+
+                if (currentLand && currentLand.paid) {
+                    clearInterval(fullscreenCountdownInterval);
+                    paymentLoadingOverlay.style.display = 'none';
+                    document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                    showPaymentSuccess();
+                    return;
+                }
+
                 let minutes = parseInt(timer / 60, 10);
                 let seconds = parseInt(timer % 60, 10);
 
@@ -722,14 +739,24 @@
 
                 if (--timer < 0) {
                     clearInterval(fullscreenCountdownInterval);
+                    paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                     showPaymentStatus(false, 'Payment code has expired!');
-                    // No need to call cancel API here, as the code is expired anyway
                 }
             }, 1000);
 
+            document.getElementById('fullscreen-copy-code-button').addEventListener('click', () => {
+                const paymentCode = document.getElementById('fullscreen-payment-code').textContent;
+                navigator.clipboard.writeText(`/land payment ${paymentCode}`).then(() => {
+                    alert('Command copied to clipboard!');
+                }).catch(err => {
+                    console.error('Could not copy text: ', err);
+                });
+            });
+
             document.getElementById('cancel-payment-button').onclick = async () => {
                 clearInterval(fullscreenCountdownInterval);
+                paymentLoadingOverlay.style.display = 'none';
                 document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                 showLoading('Cancelling payment...');
                 try {
