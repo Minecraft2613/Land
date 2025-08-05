@@ -31,12 +31,12 @@
       "landType": "Player",
       "paymentCode": "OADY5L",
       "purchaseTime": 1754390754310,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 1367.3
 }
