@@ -1,32 +1,6 @@
 {
   "users": [],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 11,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 11
-        }
-      ],
-      "blocks": 121,
-      "cost": 1367.3,
-      "baseCost": 1210,
-      "tax": 121,
-      "gst": 36.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "U73TBA",
-      "purchaseTime": 1754394395509,
-      "paid": false
-    }
-  ],
+  "lands": [],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
