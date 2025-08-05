@@ -110,6 +110,10 @@
                     <div class="land-card">
                         <h3>Register Government Land</h3>
                         <form id="register-gov-land-form">
+                            <div class="form-group">
+                                <label for="gov-land-gap">Gap for Player Lands (Blocks)</label>
+                                <input type="number" id="gov-land-gap" name="gov-land-gap" required>
+                            </div>
                             <!-- Coords will be generated here -->
                         </form>
                         <button type="submit" class="button login-button" id="register-gov-land-button">Register Land</button>
@@ -263,6 +267,25 @@
                 lands = data.lands || [];
                 govConfig = data.govConfig || { gap: 10, landType: 'Government' };
                 governmentBalance = data.governmentBalance || 0;
+
+                // Check for pending land claims for the current user
+                if (currentUser) {
+                    const pendingLand = lands.find(land => 
+                        land.owner === currentUser.minecraftName && 
+                        !land.paid && 
+                        land.paymentCode
+                    );
+                    if (pendingLand) {
+                        document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
+                        document.getElementById('fullscreen-payment-amount').textContent = pendingLand.cost.toFixed(2);
+                        document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+                        startFullscreenCountdown(300, pendingLand.paymentCode); // Assuming 5 minutes duration
+                    } else {
+                        // If no pending land, ensure the overlay is hidden
+                        document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                        document.getElementById('payment-loading-overlay').style.display = 'none';
+                    }
+                }
             } catch (e) {
                 console.error("Could not load data from API", e);
                 showMessage(dashboardMessages, 'Failed to load data from the server. Please check the API URL.', 'error');
@@ -315,35 +338,39 @@
             return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
         };
 
-        const isColliding = (newPlotCoords, existingPlots, newPlotType, newPlotGap) => {
+        const isColliding = (newPlotCoords, existingLands, newPlotType, newPlotGap) => {
             const numericNewPlotCoords = newPlotCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
-            const newMinX = Math.min(...numericNewPlotCoords.map(c => c.x));
-            const newMaxX = Math.max(...numericNewPlotCoords.map(c => c.x));
-            const newMinZ = Math.min(...numericNewPlotCoords.map(c => c.z));
-            const newMaxZ = Math.max(...numericNewPlotCoords.map(c => c.z));
+            const newMinX = Math.min(numericNewPlotCoords[0].x, numericNewPlotCoords[1].x);
+            const newMaxX = Math.max(numericNewPlotCoords[0].x, numericNewPlotCoords[1].x);
+            const newMinZ = Math.min(numericNewPlotCoords[0].z, numericNewPlotCoords[1].z);
+            const newMaxZ = Math.max(numericNewPlotCoords[0].z, numericNewPlotCoords[1].z);
 
-            for (const existingPlot of existingPlots) {
-                const existingMinX = Math.min(...existingPlot.coords.map(c => c.x));
-                const existingMaxX = Math.max(...existingPlot.coords.map(c => c.x));
-                const existingMinZ = Math.min(...existingPlot.coords.map(c => c.z));
-                const existingMaxZ = Math.max(...existingPlot.coords.map(c => c.z));
+            for (const existingLand of existingLands) {
+                const existingMinX = Math.min(existingLand.coords[0].x, existingLand.coords[1].x);
+                const existingMaxX = Math.max(existingLand.coords[0].x, existingLand.coords[1].x);
+                const existingMinZ = Math.min(existingLand.coords[0].z, existingLand.coords[1].z);
+                const existingMaxZ = Math.max(existingLand.coords[0].z, existingLand.coords[1].z);
 
-                let effectiveNewPlotGap = 0;
-                let effectiveExistingPlotGap = 0;
+                let effectiveNewPlotGap = newPlotGap;
+                let effectiveExistingPlotGap = existingLand.gap;
 
                 // Determine effective gap based on plot types
-                if (newPlotType === 'Player' && existingPlot.landType === 'Player') {
+                if (newPlotType === 'Player' && existingLand.landType === 'Player') {
+                    // Player vs Player: use PLAYER_PLOT_GAP for both
+                    effectiveNewPlotGap = PLAYER_PLOT_GAP;
+                    effectiveExistingPlotGap = PLAYER_PLOT_GAP;
+                } else if (newPlotType === 'Player' && existingLand.landType !== 'Player') {
+                    // Player vs Gov: use PLAYER_PLOT_GAP for player, existingLand.gap for gov
+                    effectiveNewPlotGap = PLAYER_PLOT_GAP;
+                    effectiveExistingPlotGap = existingLand.gap;
+                } else if (newPlotType !== 'Player' && existingLand.landType === 'Player') {
+                    // Gov vs Player: use newPlotGap for gov, PLAYER_PLOT_GAP for player
                     effectiveNewPlotGap = newPlotGap;
-                    effectiveExistingPlotGap = existingPlot.gap;
-                } else if (newPlotType === 'Player' && existingPlot.landType !== 'Player') { // Player vs Gov
-                    effectiveNewPlotGap = newPlotGap;
-                    effectiveExistingPlotGap = existingPlot.gap;
-                } else if (newPlotType !== 'Player' && existingPlot.landType === 'Player') { // Gov vs Player
-                    effectiveNewPlotGap = newPlotGap;
-                    effectiveExistingPlotGap = existingPlot.gap;
-                } else if (newPlotType !== 'Player' && existingPlot.landType !== 'Player') { // Gov vs Gov
-                    effectiveNewPlotGap = 0; // No gap for government plots
-                    effectiveExistingPlotGap = 0; // No gap for government plots
+                    effectiveExistingPlotGap = PLAYER_PLOT_GAP;
+                } else if (newPlotType !== 'Player' && existingLand.landType !== 'Player') {
+                    // Gov vs Gov: no collision check (effective gap 0)
+                    effectiveNewPlotGap = 0;
+                    effectiveExistingPlotGap = 0;
                 }
 
                 const newPlotWithGapMinX = newMinX - effectiveNewPlotGap;
@@ -362,7 +389,11 @@
                 const overlapZ = Math.max(newPlotWithGapMinZ, existingPlotWithGapMinZ) < Math.min(newPlotWithGapMaxZ, existingPlotWithGapMaxZ);
 
                 if (overlapX && overlapZ) {
-                    showMessage(buyLandMessages, `Collision detected with an existing plot owned by ${existingPlot.owner} (${existingPlot.landType} land)! Please choose a different location.`, 'error');
+                    // Special rule: Government land can collide with other government land
+                    if (newPlotType !== 'Player' && existingLand.landType !== 'Player') {
+                        return false; // No collision for Gov vs Gov
+                    }
+                    showMessage(buyLandMessages, `Collision detected with an existing plot owned by ${existingLand.owner} (${existingLand.landType} land)! Please choose a different location.`, 'error');
                     return true;
                 }
             }
@@ -413,8 +444,28 @@
         
         function renderBuyLand() {
             setView('buy-land-view');
-            // The coordinate form is no longer generated here as land selection is done in-game.
-            // The payment section will be displayed when a payment code is received from the plugin.
+            renderCoordinatesForm(buyLandForm, 2, 'player');
+            const coordsInputs = buyLandForm.querySelectorAll('.coord-input');
+            const liveCalculationCard = document.getElementById('live-calculation-card');
+
+            // Add event listeners for live calculation
+            coordsInputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    const coords = getFormCoordinates(buyLandForm);
+                    const calculatedDetails = calculatePlotDetails(coords);
+
+                    if (calculatedDetails.isValid) {
+                        liveCalculationCard.style.display = 'block';
+                        document.getElementById('calc-blocks').textContent = calculatedDetails.blocks;
+                        document.getElementById('calc-base-cost').textContent = calculatedDetails.baseCost.toFixed(2);
+                        document.getElementById('calc-tax').textContent = calculatedDetails.tax.toFixed(2);
+                        document.getElementById('calc-gst').textContent = calculatedDetails.gst.toFixed(2);
+                        document.getElementById('calc-total-cost').textContent = calculatedDetails.cost.toFixed(2);
+                    } else {
+                        liveCalculationCard.style.display = 'none';
+                    }
+                });
+            });
         }
         
         function renderGovPanel() {
@@ -544,9 +595,54 @@
             button.disabled = true;
 
             try {
-                // The land reservation is now handled by the plugin.
-                // The web interface will only display the payment section if a payment code is provided.
-                showMessage(buyLandMessages, 'Please use the in-game /land claim command to reserve land.', 'info');
+                const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
+                const calculatedDetails = calculatePlotDetails(coords);
+
+                if (!calculatedDetails.isValid) {
+                    showMessage(buyLandMessages, 'Please enter valid numeric coordinates for both points.', 'error');
+                    return;
+                }
+
+                if (calculatedDetails.blocks > MAX_PLAYER_LAND_BLOCKS) {
+                    showMessage(buyLandMessages, `Plot is too large. Max size is ${MAX_PLAYER_LAND_BLOCKS} blocks.`, 'error');
+                    return;
+                }
+                
+                const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+                const isCollision = isColliding(newCoords, lands, 'Player', PLAYER_PLOT_GAP);
+                if (isCollision) {
+                    hideLoading();
+                    return;
+                }
+
+                const paymentCode = generatePaymentCode();
+                const newLand = {
+                    owner: currentUser.minecraftName,
+                    coords: newCoords,
+                    blocks: calculatedDetails.blocks,
+                    cost: calculatedDetails.cost,
+                    baseCost: calculatedDetails.baseCost,
+                    tax: calculatedDetails.tax,
+                    gst: calculatedDetails.gst,
+                    gap: PLAYER_PLOT_GAP,
+                    landType: 'Player',
+                    paymentCode: paymentCode,
+                    purchaseTime: new Date().getTime(),
+                    paid: false
+                };
+
+                lands.push(newLand);
+                
+                showLoading('Reserving land...');
+                await saveData();
+                hideLoading();
+
+                // Show fullscreen timer
+                document.getElementById('fullscreen-payment-code').textContent = paymentCode;
+                document.getElementById('fullscreen-payment-amount').textContent = calculatedDetails.cost.toFixed(2);
+                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+
+                startFullscreenCountdown(300, paymentCode); // 5 minutes in seconds
 
             } catch (error) {
                 console.error("Buy land submission error:", error);
@@ -587,9 +683,15 @@
             try {
                 const govCoords = getFormCoordinates(registerGovLandForm, 2, 'gov-coord');
                 const calculatedDetails = calculatePlotDetails(govCoords);
+                const govLandGap = parseInt(document.getElementById('gov-land-gap').value, 10);
 
                 if (!calculatedDetails.isValid) {
                     showMessage(govPanelMessages, 'Please enter valid numeric coordinates for both points.', 'error');
+                    return;
+                }
+
+                if (isNaN(govLandGap) || govLandGap < 0) {
+                    showMessage(govPanelMessages, 'Please enter a valid gap for player lands.', 'error');
                     return;
                 }
 
@@ -604,7 +706,7 @@
                     coords: newCoords,
                     blocks: calculatedDetails.blocks,
                     cost: 0, // Government lands are free
-                    gap: govConfig.gap,
+                    gap: govLandGap, // Use the dynamically defined gap
                     landType: govConfig.landType,
                     paymentCode: null, // No payment needed
                     purchaseTime: new Date().getTime(),
