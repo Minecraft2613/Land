@@ -133,6 +133,21 @@
         </section>
     </div>
 
+    <div id="fullscreen-timer-overlay" style="display: none;">
+        <div class="timer-container">
+            <div class="outer-ring"></div>
+            <div class="inner-ring"></div>
+            <div id="fullscreen-countdown">5:00</div>
+        </div>
+        <div class="payment-details">
+            <h3>Complete Your Purchase In-Game</h3>
+            <p>Your land has been reserved. Use the following command in-game:</p>
+            <p><code>/land payment <span id="fullscreen-payment-code"></span> <button id="fullscreen-copy-code-button">Copy</button></code></p>
+            <p>Amount: $<span id="fullscreen-payment-amount"></span></p>
+            <button id="cancel-payment-button" class="button">Cancel</button>
+        </div>
+    </div>
+
     <div id="payment-loading-overlay" style="display: none;">
         <div class="minecraft-logo"></div>
         <p>Processing Payment...</p>
@@ -275,18 +290,20 @@
 
         // --- Utility Functions ---
         const calculatePlotDetails = (coords) => {
-            const numericCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
-            if (numericCoords.some(c => isNaN(c.x) || isNaN(c.y) || isNaN(c.z))) {
+            if (coords.length < 2) return { isValid: false };
+
+            const c1 = coords[0];
+            const c2 = coords[1];
+
+            const numericC1 = { x: parseFloat(c1.x), y: parseFloat(c1.y), z: parseFloat(c1.z) };
+            const numericC2 = { x: parseFloat(c2.x), y: parseFloat(c2.y), z: parseFloat(c2.z) };
+
+            if (isNaN(numericC1.x) || isNaN(numericC1.y) || isNaN(numericC1.z) || isNaN(numericC2.x) || isNaN(numericC2.y) || isNaN(numericC2.z)) {
                 return { blocks: 0, cost: 0, baseCost: 0, tax: 0, gst: 0, isValid: false };
             }
 
-            const minX = Math.min(...numericCoords.map(c => c.x));
-            const maxX = Math.max(...numericCoords.map(c => c.x));
-            const minZ = Math.min(...numericCoords.map(c => c.z));
-            const maxZ = Math.max(...numericCoords.map(c => c.z));
-
-            const blockWidth = Math.abs(maxX - minX) + 1;
-            const blockDepth = Math.abs(maxZ - minZ) + 1;
+            const blockWidth = Math.abs(numericC1.x - numericC2.x) + 1;
+            const blockDepth = Math.abs(numericC1.z - numericC2.z) + 1;
             const totalBlocks = blockWidth * blockDepth;
 
             const baseCost = totalBlocks * 10;
@@ -350,6 +367,22 @@
             }
             return false;
         };
+
+        let dataPollingInterval;
+
+        function startDataPolling() {
+            stopDataPolling(); // Ensure no multiple intervals are running
+            dataPollingInterval = setInterval(async () => {
+                await loadData();
+                if (document.getElementById('dashboard-view').classList.contains('active')) {
+                    renderDashboard();
+                }
+            }, 5000); // Poll every 5 seconds
+        }
+
+        function stopDataPolling() {
+            clearInterval(dataPollingInterval);
+        }
 
         // --- View Switching ---
         function setView(viewId) {
@@ -448,21 +481,24 @@
         
         function renderCoordinatesForm(formElement, count, type) {
             const formGrid = formElement.querySelector('.form-grid') || formElement;
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `
-                    <div class="form-group">
-                        <label>Point ${i}</label>
-                        <input type="number" name="${type}-coord-x-${i}" placeholder="X" class="coord-input" required>
-                        <input type="number" name="${type}-coord-y-${i}" placeholder="Y" class="coord-input" required>
-                        <input type="number" name="${type}-coord-z-${i}" placeholder="Z" class="coord-input" required>
-                    </div>
-                `;
-            }
+            let html = `
+                <div class="form-group">
+                    <label>Corner 1 (e.g., North-West)</label>
+                    <input type="number" name="${type}-coord-x-1" placeholder="X" class="coord-input" required>
+                    <input type="number" name="${type}-coord-y-1" placeholder="Y" class="coord-input" required>
+                    <input type="number" name="${type}-coord-z-1" placeholder="Z" class="coord-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Corner 2 (e.g., South-East)</label>
+                    <input type="number" name="${type}-coord-x-2" placeholder="X" class="coord-input" required>
+                    <input type="number" name="${type}-coord-y-2" placeholder="Y" class="coord-input" required>
+                    <input type="number" name="${type}-coord-z-2" placeholder="Z" class="coord-input" required>
+                </div>
+            `;
             formGrid.innerHTML = html;
         }
 
-        function getFormCoordinates(formElement, count = 4, prefix = 'player-coord') {
+        function getFormCoordinates(formElement, count = 2, prefix = 'player-coord') {
             const coords = [];
             for (let i = 1; i <= count; i++) {
                 const x = formElement.querySelector(`input[name="${prefix}-x-${i}"]`)?.value;
@@ -505,11 +541,13 @@
             await saveData();
             hideLoading();
             renderDashboard();
+            startDataPolling();
         });
 
         logoutButton.addEventListener('click', () => {
             currentUser = null;
             localStorage.removeItem('currentUser');
+            stopDataPolling();
             setView('login-view');
         });
 
@@ -566,20 +604,12 @@
                 await saveData();
                 hideLoading();
 
-                // Show payment loading screen
-                const paymentLoadingOverlay = document.getElementById('payment-loading-overlay');
-                paymentLoadingOverlay.style.display = 'flex';
+                // Show fullscreen timer
+                document.getElementById('fullscreen-payment-code').textContent = paymentCode;
+                document.getElementById('fullscreen-payment-amount').textContent = calculatedDetails.cost.toFixed(2);
+                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
 
-                setTimeout(() => {
-                    paymentLoadingOverlay.style.display = 'none';
-                    document.getElementById('payment-code').textContent = paymentCode;
-                    document.getElementById('payment-amount').textContent = calculatedDetails.cost.toFixed(2);
-                    document.getElementById('payment-section').style.display = 'block';
-
-                    showMessage(buyLandMessages, 'Land reserved! Please complete the payment in-game.', 'success');
-
-                    startCountdown(300); // 5 minutes in seconds
-                }, 2000);
+                startFullscreenCountdown(300, paymentCode); // 5 minutes in seconds
 
             } catch (error) {
                 console.error("Buy land submission error:", error);
@@ -667,16 +697,16 @@
             return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
-        let countdownInterval;
+        let fullscreenCountdownInterval;
 
-        function startCountdown(duration) {
+        function startFullscreenCountdown(duration, paymentCode) {
             let timer = duration;
-            const countdownElement = document.getElementById('countdown');
-            const paymentWarning = document.getElementById('payment-warning');
+            const countdownElement = document.getElementById('fullscreen-countdown');
+            const innerRing = document.querySelector('.inner-ring');
 
-            clearInterval(countdownInterval);
+            clearInterval(fullscreenCountdownInterval);
 
-            countdownInterval = setInterval(() => {
+            fullscreenCountdownInterval = setInterval(() => {
                 let minutes = parseInt(timer / 60, 10);
                 let seconds = parseInt(timer % 60, 10);
 
@@ -685,24 +715,40 @@
 
                 countdownElement.textContent = minutes + ":" + seconds;
 
-                if (timer <= 60) { // Warn when 1 minute or less remains
-                    paymentWarning.style.display = 'block';
-                } else {
-                    paymentWarning.style.display = 'none';
-                }
-
-                const percentage = (timer / duration) * 100;
-                const gpayCircle = document.querySelector('.gpay-circle');
-                gpayCircle.style.background = `conic-gradient(#F44336 ${100 - percentage}%, #4CAF50 0% ${percentage}%)`;
+                const percentage = (timer / duration);
+                const red = Math.round(255 * (1 - percentage));
+                const green = Math.round(255 * percentage);
+                innerRing.style.borderColor = `rgb(${red}, ${green}, 0)`;
 
                 if (--timer < 0) {
-                    clearInterval(countdownInterval);
-                    countdownElement.textContent = "EXPIRED";
-                    paymentWarning.textContent = "Payment code has expired!";
-                    paymentWarning.style.display = 'block';
-                    // Optionally disable payment section or clear code
+                    clearInterval(fullscreenCountdownInterval);
+                    document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                    showPaymentStatus(false, 'Payment code has expired!');
+                    // No need to call cancel API here, as the code is expired anyway
                 }
             }, 1000);
+
+            document.getElementById('cancel-payment-button').onclick = async () => {
+                clearInterval(fullscreenCountdownInterval);
+                document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                showLoading('Cancelling payment...');
+                try {
+                    const response = await fetch(`${API_URL}/cancel-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ paymentCode })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showPaymentStatus(false, 'Payment Cancelled');
+                    } else {
+                        showPaymentStatus(false, 'Failed to cancel payment.');
+                    }
+                } catch (e) {
+                    showPaymentStatus(false, 'Error cancelling payment.');
+                }
+                hideLoading();
+            };
         }
 
         document.getElementById('copy-code-button').addEventListener('click', () => {

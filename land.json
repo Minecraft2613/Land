@@ -1,48 +1,8 @@
-{
-  "users": [
-    {
-      "minecraftName": "ansh",
-      "minecraftEdition": "Java",
-      "wallet": 1000
-    }
-  ],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 11,
-          "y": 11,
-          "z": 11
-        },
-        {
-          "x": 11,
-          "y": 11,
-          "z": 11
-        },
-        {
-          "x": 11,
-          "y": 11,
-          "z": 11
-        },
-        {
-          "x": 11,
-          "y": 11,
-          "z": 1111
-        }
-      ],
-      "blocks": 1101,
-      "cost": 12441.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "QFRAGJ",
-      "purchaseTime": 1754389167604,
-      "paid": true
-    }
-  ],
-  "govConfig": {
-    "gap": 10,
-    "landType": "Government"
-  },
-  "governmentBalance": 12441.3
-}
+ {
+             "users": [],
+               "lands": [],
+               "govConfig": {
+                   "gap": 10,
+                   "landType": "Government"
+              }
+            }
