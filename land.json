@@ -31,12 +31,12 @@
       "landType": "Player",
       "paymentCode": "KOTS0Q",
       "purchaseTime": 1754391678943,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 139227.3
 }
