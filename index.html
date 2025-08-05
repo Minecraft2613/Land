@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minecraft Land Registry</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -240,7 +241,7 @@
         }
 
         function showPaymentSuccess() {
-            const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-20.mp3'); // A more generic success sound
+            const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'); // A more distinct success sound
             audio.play();
             showPaymentStatus(true, 'Payment Successful!');
         }
@@ -412,33 +413,13 @@
         
         function renderBuyLand() {
             setView('buy-land-view');
-            renderCoordinatesForm(buyLandForm, 4, 'player');
-            const coordsInputs = buyLandForm.querySelectorAll('.coord-input');
-            const liveCalculationCard = document.getElementById('live-calculation-card');
-
-            // Add event listeners for live calculation
-            coordsInputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    const coords = getFormCoordinates(buyLandForm);
-                    const calculatedDetails = calculatePlotDetails(coords);
-
-                    if (calculatedDetails.isValid) {
-                        liveCalculationCard.style.display = 'block';
-                        document.getElementById('calc-blocks').textContent = calculatedDetails.blocks;
-                        document.getElementById('calc-base-cost').textContent = calculatedDetails.baseCost.toFixed(2);
-                        document.getElementById('calc-tax').textContent = calculatedDetails.tax.toFixed(2);
-                        document.getElementById('calc-gst').textContent = calculatedDetails.gst.toFixed(2);
-                        document.getElementById('calc-total-cost').textContent = calculatedDetails.cost.toFixed(2);
-                    } else {
-                        liveCalculationCard.style.display = 'none';
-                    }
-                });
-            });
+            // The coordinate form is no longer generated here as land selection is done in-game.
+            // The payment section will be displayed when a payment code is received from the plugin.
         }
         
         function renderGovPanel() {
             setView('gov-panel-view');
-            renderCoordinatesForm(registerGovLandForm, 4, 'gov');
+            renderCoordinatesForm(registerGovLandForm, 2, 'gov');
             
             // Populate settings form with current values
             document.getElementById('gov-gap').value = govConfig.gap;
@@ -563,53 +544,9 @@
             button.disabled = true;
 
             try {
-                const coords = getFormCoordinates(buyLandForm, 4, 'player-coord');
-                const calculatedDetails = calculatePlotDetails(coords);
-
-                if (!calculatedDetails.isValid) {
-                    showMessage(buyLandMessages, 'Please enter valid numeric coordinates for all 4 points.', 'error');
-                    return;
-                }
-
-                if (calculatedDetails.blocks > MAX_PLAYER_LAND_BLOCKS) {
-                    showMessage(buyLandMessages, `Plot is too large. Max size is ${MAX_PLAYER_LAND_BLOCKS} blocks.`, 'error');
-                    return;
-                }
-                
-                // Removed balance check from web
-
-                const newCoords = coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
-                const isCollision = isColliding(newCoords, lands, 'Player', PLAYER_PLOT_GAP);
-                if (isCollision) {
-                    hideLoading();
-                    return;
-                }
-
-                const paymentCode = generatePaymentCode();
-                const newLand = {
-                    owner: currentUser.minecraftName,
-                    coords: newCoords,
-                    blocks: calculatedDetails.blocks,
-                    cost: calculatedDetails.cost,
-                    gap: PLAYER_PLOT_GAP,
-                    landType: 'Player',
-                    paymentCode: paymentCode,
-                    purchaseTime: new Date().getTime(),
-                    paid: false
-                };
-
-                lands.push(newLand);
-                
-                showLoading('Reserving land...');
-                await saveData();
-                hideLoading();
-
-                // Show fullscreen timer
-                document.getElementById('fullscreen-payment-code').textContent = paymentCode;
-                document.getElementById('fullscreen-payment-amount').textContent = calculatedDetails.cost.toFixed(2);
-                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
-
-                startFullscreenCountdown(300, paymentCode); // 5 minutes in seconds
+                // The land reservation is now handled by the plugin.
+                // The web interface will only display the payment section if a payment code is provided.
+                showMessage(buyLandMessages, 'Please use the in-game /land claim command to reserve land.', 'info');
 
             } catch (error) {
                 console.error("Buy land submission error:", error);
@@ -648,11 +585,11 @@
             button.disabled = true;
 
             try {
-                const govCoords = getFormCoordinates(registerGovLandForm, 4, 'gov-coord');
+                const govCoords = getFormCoordinates(registerGovLandForm, 2, 'gov-coord');
                 const calculatedDetails = calculatePlotDetails(govCoords);
 
                 if (!calculatedDetails.isValid) {
-                    showMessage(govPanelMessages, 'Please enter valid numeric coordinates for all 4 points.', 'error');
+                    showMessage(govPanelMessages, 'Please enter valid numeric coordinates for both points.', 'error');
                     return;
                 }
 
@@ -768,6 +705,8 @@
                     const result = await response.json();
                     if (result.success) {
                         showPaymentStatus(false, 'Payment Cancelled');
+                        const audio = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3'); // A distinct failure sound
+                        audio.play();
                     } else {
                         showPaymentStatus(false, 'Failed to cancel payment.');
                     }
