@@ -31,6 +31,31 @@
       "paymentCode": "Y9QQOC",
       "purchaseTime": 1754395138289,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 111,
+          "y": 1,
+          "z": 22
+        },
+        {
+          "x": 22,
+          "y": 1,
+          "z": 111
+        }
+      ],
+      "blocks": 8100,
+      "cost": 91530,
+      "baseCost": 81000,
+      "tax": 8100,
+      "gst": 2430,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "YO0DD7",
+      "purchaseTime": 1754395905517,
+      "paid": false
     }
   ],
   "govConfig": {
