@@ -275,15 +275,16 @@
                         !land.paid && 
                         land.paymentCode
                     );
-                    if (pendingLand) {
+                    if (pendingLand && document.getElementById('fullscreen-timer-overlay').style.display !== 'flex') {
                         document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
                         document.getElementById('fullscreen-payment-amount').textContent = pendingLand.cost.toFixed(2);
                         document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
                         startFullscreenCountdown(300, pendingLand.paymentCode); // Assuming 5 minutes duration
-                    } else {
-                        // If no pending land, ensure the overlay is hidden
+                    } else if (!pendingLand && document.getElementById('fullscreen-timer-overlay').style.display === 'flex') {
+                        // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
                         document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                         document.getElementById('payment-loading-overlay').style.display = 'none';
+                        clearInterval(fullscreenCountdownInterval); // Stop the timer if it was running
                     }
                 }
             } catch (e) {
@@ -780,7 +781,7 @@
                     clearInterval(fullscreenCountdownInterval);
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                    showPaymentStatus(false, 'Payment code has expired!');
+                    showPaymentStatus(false, 'Timer is run out! Payment code has expired.');
                 }
             }, 1000);
 
