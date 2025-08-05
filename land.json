@@ -1,80 +1,8 @@
-{
-  "users": [
-    {
-      "minecraftName": "ansh",
-      "minecraftEdition": "Java",
-      "wallet": 1000
-    }
-  ],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 1,
-          "y": 11,
-          "z": 1
-        },
-        {
-          "x": 11,
-          "y": 1,
-          "z": 11
-        },
-        {
-          "x": 11,
-          "y": 1,
-          "z": 11
-        },
-        {
-          "x": 11,
-          "y": 11,
-          "z": 11
-        }
-      ],
-      "blocks": 121,
-      "cost": 1367.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "1P5JUI",
-      "purchaseTime": 1754326732776,
-      "paid": true
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": -276,
-          "y": 66,
-          "z": -195
-        },
-        {
-          "x": -276,
-          "y": 66,
-          "z": -193
-        },
-        {
-          "x": -277,
-          "y": 67,
-          "z": -193
-        },
-        {
-          "x": -277,
-          "y": 67,
-          "z": -193
-        }
-      ],
-      "blocks": 0,
-      "cost": 0,
-      "gap": 0,
-      "landType": "Player",
-      "paymentCode": null,
-      "purchaseTime": 1754326774300,
-      "paid": true
-    }
-  ],
-  "govConfig": {
-    "gap": 10,
-    "landType": "Government"
-  },
-  "governmentBalance": 1367.3
-}
+ {
+             "users": [],
+               "lands": [],
+               "govConfig": {
+                   "gap": 10,
+                   "landType": "Government"
+              }
+            }

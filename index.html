@@ -120,16 +120,8 @@
                     <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
                 </div>
                 <div class="land-card" style="margin-top: 20px;">
-                    <h3>Government Balance</h3>
-                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
-                </div>
-                <div class="land-card" style="margin-top: 20px;">
-                    <h3>Government Balance</h3>
-                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
-                </div>
-                <div class="land-card" style="margin-top: 20px;">
-                    <h3>Government Balance</h3>
-                    <p>Current Balance: $<span id="gov-balance" class="detail-value">0.00</span></p>
+                    <h3>Latest Transactions</h3>
+                    <ul id="transaction-list"></ul>
                 </div>
             </div>
             
@@ -139,6 +131,11 @@
                 <div id="selected-player-plots" class="card-grid"></div>
             </div>
         </section>
+    </div>
+
+    <div id="payment-loading-overlay" style="display: none;">
+        <div class="minecraft-logo"></div>
+        <p>Processing Payment...</p>
     </div>
 
     <!-- Loading Overlay -->
@@ -225,6 +222,12 @@
             paymentStatusIcon.innerHTML = success ? '&#10004;' : '&#10008;'; // Checkmark or X
             paymentStatusMessage.textContent = message;
             paymentStatusOverlay.style.display = 'flex';
+        }
+
+        function showPaymentSuccess() {
+            const audio = new Audio('https://www.myinstants.com/media/sounds/google-pay-success-sound.mp3');
+            audio.play();
+            showPaymentStatus(true, 'Payment Successful!');
         }
 
         paymentStatusCloseButton.addEventListener('click', () => {
@@ -415,6 +418,10 @@
                 <button class="button" data-owner="${owner}">${owner}</button>
             `).join('');
 
+            const paidLands = lands.filter(land => land.paid && land.cost > 0).sort((a, b) => b.purchaseTime - a.purchaseTime).slice(0, 5);
+            const transactionList = document.getElementById('transaction-list');
+            transactionList.innerHTML = paidLands.map(land => `<li>${land.owner} purchased land for ${land.cost.toFixed(2)}</li>`).join('');
+
             // Display plots for the currently selected player, or an empty message
             if (selectedPlayerForManagement) {
                 displayPlayerPlots(selectedPlayerForManagement);
@@ -494,6 +501,7 @@
                 users.push(currentUser);
             }
 
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await saveData();
             hideLoading();
             renderDashboard();
@@ -501,6 +509,7 @@
 
         logoutButton.addEventListener('click', () => {
             currentUser = null;
+            localStorage.removeItem('currentUser');
             setView('login-view');
         });
 
@@ -557,13 +566,20 @@
                 await saveData();
                 hideLoading();
 
-                document.getElementById('payment-code').textContent = paymentCode;
-                document.getElementById('payment-amount').textContent = calculatedDetails.cost.toFixed(2);
-                document.getElementById('payment-section').style.display = 'block';
+                // Show payment loading screen
+                const paymentLoadingOverlay = document.getElementById('payment-loading-overlay');
+                paymentLoadingOverlay.style.display = 'flex';
 
-                showMessage(buyLandMessages, 'Land reserved! Please complete the payment in-game.', 'success');
+                setTimeout(() => {
+                    paymentLoadingOverlay.style.display = 'none';
+                    document.getElementById('payment-code').textContent = paymentCode;
+                    document.getElementById('payment-amount').textContent = calculatedDetails.cost.toFixed(2);
+                    document.getElementById('payment-section').style.display = 'block';
 
-                startCountdown(300); // 5 minutes in seconds
+                    showMessage(buyLandMessages, 'Land reserved! Please complete the payment in-game.', 'success');
+
+                    startCountdown(300); // 5 minutes in seconds
+                }, 2000);
 
             } catch (error) {
                 console.error("Buy land submission error:", error);
@@ -620,12 +636,12 @@
                     owner: currentUser.minecraftName,
                     coords: newCoords,
                     blocks: calculatedDetails.blocks,
-                    cost: 0,
+                    cost: 0, // Government lands are free
                     gap: govConfig.gap,
                     landType: govConfig.landType,
-                    paymentCode: null, // Government lands don't need payment codes
+                    paymentCode: null, // No payment needed
                     purchaseTime: new Date().getTime(),
-                    paid: true // Government lands are considered paid immediately
+                    paid: true // Marked as paid instantly
                 };
 
                 lands.push(newLand);
@@ -675,6 +691,10 @@
                     paymentWarning.style.display = 'none';
                 }
 
+                const percentage = (timer / duration) * 100;
+                const gpayCircle = document.querySelector('.gpay-circle');
+                gpayCircle.style.background = `conic-gradient(#F44336 ${100 - percentage}%, #4CAF50 0% ${percentage}%)`;
+
                 if (--timer < 0) {
                     clearInterval(countdownInterval);
                     countdownElement.textContent = "EXPIRED";
@@ -695,8 +715,10 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
-            await loadData();
-            if (currentUser) {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                await loadData();
                 renderDashboard();
             } else {
                 setView('login-view');
