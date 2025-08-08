@@ -170,12 +170,12 @@
       "landType": "Player",
       "paymentCode": "TNO41G",
       "purchaseTime": 1754673602318,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 854099.2
+  "governmentBalance": 865037.6
 }
