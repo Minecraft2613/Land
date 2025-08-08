@@ -95,12 +95,12 @@
       "landType": "Player",
       "paymentCode": "R8WG85",
       "purchaseTime": 1754562909381,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 91654.3
+  "governmentBalance": 188269.3
 }
