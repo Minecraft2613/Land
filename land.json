@@ -96,6 +96,31 @@
       "paymentCode": "R8WG85",
       "purchaseTime": 1754562909381,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": -4,
+          "y": 77,
+          "z": -1270
+        },
+        {
+          "x": -250,
+          "y": 77,
+          "z": -1458
+        }
+      ],
+      "blocks": 46683,
+      "cost": 527517.9,
+      "baseCost": 466830,
+      "tax": 46683,
+      "gst": 14004.9,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "49T5LH",
+      "purchaseTime": 1754671423014,
+      "paid": false
     }
   ],
   "govConfig": {
