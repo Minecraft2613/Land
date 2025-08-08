@@ -121,6 +121,31 @@
       "paymentCode": "49T5LH",
       "purchaseTime": 1754671423014,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": -372,
+          "y": 66,
+          "z": 22
+        },
+        {
+          "x": -491,
+          "y": 67,
+          "z": -79
+        }
+      ],
+      "blocks": 12240,
+      "cost": 138312,
+      "baseCost": 122400,
+      "tax": 12240,
+      "gst": 3672,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "6T5YWU",
+      "purchaseTime": 1754673532861,
+      "paid": false
     }
   ],
   "govConfig": {
