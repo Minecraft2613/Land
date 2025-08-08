@@ -245,12 +245,12 @@
       "landType": "Player",
       "paymentCode": "X0TSDA",
       "purchaseTime": 1754674152330,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 944024.6
+  "governmentBalance": 944160.2
 }
