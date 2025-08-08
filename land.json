@@ -196,6 +196,31 @@
       "paymentCode": "6XU9KB",
       "purchaseTime": 1754673649374,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 227,
+          "y": 62,
+          "z": 7
+        },
+        {
+          "x": 250,
+          "y": 64,
+          "z": -20
+        }
+      ],
+      "blocks": 672,
+      "cost": 7593.6,
+      "baseCost": 6720,
+      "tax": 672,
+      "gst": 201.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "5E34GF",
+      "purchaseTime": 1754674017326,
+      "paid": false
     }
   ],
   "govConfig": {
