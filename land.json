@@ -246,6 +246,31 @@
       "paymentCode": "X0TSDA",
       "purchaseTime": 1754674152330,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 22222,
+          "y": 22,
+          "z": 22222
+        },
+        {
+          "x": 22222,
+          "y": 2,
+          "z": 22222
+        }
+      ],
+      "blocks": 1,
+      "cost": 11.3,
+      "baseCost": 10,
+      "tax": 1,
+      "gst": 0.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "M733M8",
+      "purchaseTime": 1754674207090,
+      "paid": false
     }
   ],
   "govConfig": {
