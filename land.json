@@ -171,6 +171,31 @@
       "paymentCode": "TNO41G",
       "purchaseTime": 1754673602318,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": -209,
+          "y": 64,
+          "z": 1
+        },
+        {
+          "x": -289,
+          "y": 66,
+          "z": -76
+        }
+      ],
+      "blocks": 6318,
+      "cost": 71393.4,
+      "baseCost": 63180,
+      "tax": 6318,
+      "gst": 1895.3999999999999,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "6XU9KB",
+      "purchaseTime": 1754673649374,
+      "paid": false
     }
   ],
   "govConfig": {
