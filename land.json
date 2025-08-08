@@ -145,12 +145,12 @@
       "landType": "Player",
       "paymentCode": "6T5YWU",
       "purchaseTime": 1754673532861,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 715787.2
+  "governmentBalance": 854099.2
 }
