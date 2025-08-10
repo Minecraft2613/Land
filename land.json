@@ -74,12 +74,12 @@
       "landType": "Player",
       "paymentCode": "FBBTUU",
       "purchaseTime": 1754837619339,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 127045.90000000001
+  "governmentBalance": 45372257.199999996
 }
