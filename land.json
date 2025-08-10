@@ -24,12 +24,12 @@
       "landType": "Player",
       "paymentCode": "S6FS3G",
       "purchaseTime": 1754836728792,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 1367.3
 }
