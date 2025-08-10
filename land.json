@@ -49,12 +49,12 @@
       "landType": "Player",
       "paymentCode": "IU46SS",
       "purchaseTime": 1754838539925,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 27895654.6
+  "governmentBalance": 90610665.9
 }
