@@ -25,6 +25,31 @@
       "paymentCode": "S6FS3G",
       "purchaseTime": 1754836728792,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 111,
+          "y": 1,
+          "z": 111
+        },
+        {
+          "x": 111,
+          "y": 1,
+          "z": 11111
+        }
+      ],
+      "blocks": 11001,
+      "cost": 124311.3,
+      "baseCost": 110010,
+      "tax": 11001,
+      "gst": 3300.2999999999997,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "GO2S44",
+      "purchaseTime": 1754836792562,
+      "paid": false
     }
   ],
   "govConfig": {
