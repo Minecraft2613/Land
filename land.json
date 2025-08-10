@@ -1,5 +1,11 @@
 {
-  "users": [],
+  "users": [
+    {
+      "minecraftName": "minecraft2613",
+      "minecraftEdition": "Java",
+      "wallet": 1000
+    }
+  ],
   "lands": [
     {
       "owner": "ansh",
