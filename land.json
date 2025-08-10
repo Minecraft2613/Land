@@ -110,12 +110,12 @@
       "landType": "Player",
       "paymentCode": "P032M4",
       "purchaseTime": 1754838308983,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 90617468.5
+  "governmentBalance": 104590415.7
 }
