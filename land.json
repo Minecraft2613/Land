@@ -49,12 +49,12 @@
       "landType": "Player",
       "paymentCode": "GO2S44",
       "purchaseTime": 1754836792562,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 2734.6
+  "governmentBalance": 127045.90000000001
 }
