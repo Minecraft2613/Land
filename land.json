@@ -50,11 +50,36 @@
       "paymentCode": "GO2S44",
       "purchaseTime": 1754836792562,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 222,
+          "y": 2,
+          "z": 222
+        },
+        {
+          "x": 2222,
+          "y": 2,
+          "z": 2222
+        }
+      ],
+      "blocks": 4004001,
+      "cost": 45245211.3,
+      "baseCost": 40040010,
+      "tax": 4004001,
+      "gst": 1201200.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "FBBTUU",
+      "purchaseTime": 1754837619339,
+      "paid": false
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 251357.2
+  "governmentBalance": 127045.90000000001
 }
