@@ -24,12 +24,12 @@
       "landType": "Player",
       "paymentCode": "DDXHA8",
       "purchaseTime": 1754909894332,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 124311.3
 }
