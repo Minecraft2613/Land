@@ -1,8 +1,35 @@
- {
-             "users": [],
-               "lands": [],
-               "govConfig": {
-                   "gap": 10,
-                   "landType": "Government"
-              }
-            }
+{
+  "users": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 11,
+          "y": 1,
+          "z": 111
+        },
+        {
+          "x": 11,
+          "y": 1,
+          "z": 11111
+        }
+      ],
+      "blocks": 11001,
+      "cost": 124311.3,
+      "baseCost": 110010,
+      "tax": 11001,
+      "gst": 3300.2999999999997,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "DDXHA8",
+      "purchaseTime": 1754909894332,
+      "paid": false
+    }
+  ],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  },
+  "governmentBalance": 0
+}
