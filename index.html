@@ -173,7 +173,7 @@
 
     <script>
         // Constants
-        const MAX_PLAYER_LAND_BLOCKS = 14404444440;
+        const MAX_PLAYER_LAND_BLOCKS = 14400;
         const PLAYER_PLOT_GAP = 7;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
@@ -736,7 +736,7 @@
         let fullscreenCountdownInterval;
         let paymentStatusPollingInterval; // New interval for polling payment status
 
-        function startFullscreenCountdown(duration, paymentCode) {
+        async function startFullscreenCountdown(duration, paymentCode) {
             paymentSuccessHandled = false; // Reset flag at the start of a new countdown
             let timer = duration;
             const countdownElement = document.getElementById('fullscreen-countdown');
