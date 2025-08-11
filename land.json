@@ -1,60 +1,8 @@
-{
-  "users": [],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1111,
-          "y": 1,
-          "z": 1111
-        }
-      ],
-      "blocks": 1234321,
-      "cost": 13947827.3,
-      "baseCost": 12343210,
-      "tax": 1234321,
-      "gst": 370296.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "6SI14U",
-      "purchaseTime": 1754838498945,
-      "paid": true
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 5555555,
-          "y": 1,
-          "z": 5555555
-        },
-        {
-          "x": 5555555,
-          "y": 1,
-          "z": 5555
-        }
-      ],
-      "blocks": 5550001,
-      "cost": 62715011.3,
-      "baseCost": 55500010,
-      "tax": 5550001,
-      "gst": 1665000.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "IU46SS",
-      "purchaseTime": 1754838539925,
-      "paid": true
-    }
-  ],
-  "govConfig": {
-    "gap": 10,
-    "landType": "Government"
-  },
-  "governmentBalance": 90610665.9
-}
+ {
+             "users": [],
+               "lands": [],
+               "govConfig": {
+                   "gap": 10,
+                   "landType": "Government"
+              }
+            }
