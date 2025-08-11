@@ -627,6 +627,7 @@
                     landType: 'Player',
                     paymentCode: paymentCode,
                     purchaseTime: new Date().getTime(),
+                    expirationTime: new Date().getTime() + 300 * 1000, // 5 minutes from now
                     paid: false
                 };
 
@@ -786,7 +787,7 @@
             }, 1000); // Timer updates every 1 second
 
             // Start polling for payment status every 5 seconds
-            paymentStatusPollingInterval = setInterval(async () => {
+            async function pollPaymentStatus() {
                 await loadData(); // Load latest data
                 const currentLand = lands.find(l => l.paymentCode === paymentCode);
 
@@ -797,7 +798,8 @@
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                     showPaymentSuccess();
                 }
-            }, 5000); // Poll every 5 seconds
+            }
+            paymentStatusPollingInterval = setInterval(pollPaymentStatus, 5000); // Poll every 5 seconds
 
             document.getElementById('fullscreen-copy-code-button').addEventListener('click', () => {
                 const paymentCode = document.getElementById('fullscreen-payment-code').textContent;
