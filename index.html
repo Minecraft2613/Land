@@ -173,7 +173,7 @@
 
     <script>
         // Constants
-        const MAX_PLAYER_LAND_BLOCKS = 14400000;
+        const MAX_PLAYER_LAND_BLOCKS = 14400;
         const PLAYER_PLOT_GAP = 7;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
@@ -274,7 +274,8 @@
                     const pendingLand = lands.find(land => 
                         land.owner === currentUser.minecraftName && 
                         !land.paid && 
-                        land.paymentCode
+                        land.paymentCode &&
+                        (new Date().getTime() < land.expirationTime) // Only show timer for non-expired lands
                     );
                     if (pendingLand && document.getElementById('fullscreen-timer-overlay').style.display !== 'flex') {
                         document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
@@ -768,7 +769,19 @@
                     clearInterval(paymentStatusPollingInterval); // Stop polling when timer runs out
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                    showPaymentStatus(false, 'Timer is run out! Payment code has expired.');
+                    showPaymentStatus(false, 'Timer is run out! Payment code has expired. Land reservation cancelled.');
+
+                    // Call the cancel-payment endpoint to remove the land data from the backend
+                    try {
+                        await fetch(`${API_URL}/cancel-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentCode })
+                        });
+                        // No need to process response, just fire and forget for cleanup
+                    } catch (e) {
+                        console.error('Error cancelling payment on timer expiry:', e);
+                    }
                 }
             }, 1000); // Timer updates every 1 second
 
