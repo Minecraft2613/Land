@@ -49,12 +49,12 @@
       "landType": "Player",
       "paymentCode": "0ZYEVR",
       "purchaseTime": 1754909950822,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 248622.6
+  "governmentBalance": 50873888.2
 }
