@@ -799,7 +799,9 @@
                     showPaymentSuccess();
                 }
             }
-            paymentStatusPollingInterval = setInterval(pollPaymentStatus, 5000); // Poll every 5 seconds
+            paymentStatusPollingInterval = setInterval(async () => {
+                await pollPaymentStatus();
+            }, 5000); // Poll every 5 seconds
 
             document.getElementById('fullscreen-copy-code-button').addEventListener('click', () => {
                 const paymentCode = document.getElementById('fullscreen-payment-code').textContent;
