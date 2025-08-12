@@ -26,6 +26,32 @@
       "purchaseTime": 1754990211787,
       "expirationTime": 1754990511787,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 66666,
+          "y": 6,
+          "z": 66666
+        },
+        {
+          "x": 66666,
+          "y": 6,
+          "z": 6666666
+        }
+      ],
+      "blocks": 6600001,
+      "cost": 74580011.3,
+      "baseCost": 66000010,
+      "tax": 6600001,
+      "gst": 1980000.2999999998,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "M803F3",
+      "purchaseTime": 1754990335713,
+      "expirationTime": 1754990635713,
+      "paid": false
     }
   ],
   "govConfig": {
