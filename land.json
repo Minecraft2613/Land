@@ -1,33 +1,6 @@
 {
   "users": [],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 111,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        }
-      ],
-      "blocks": 111,
-      "cost": 1254.3,
-      "baseCost": 1110,
-      "tax": 111,
-      "gst": 33.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "VIDX5R",
-      "purchaseTime": 1754991322097,
-      "expirationTime": 1754991622097,
-      "paid": false
-    }
-  ],
+  "lands": [],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
