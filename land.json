@@ -25,12 +25,12 @@
       "paymentCode": "7E1G3A",
       "purchaseTime": 1754990211787,
       "expirationTime": 1754990511787,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 13947827.3
 }
