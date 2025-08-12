@@ -253,6 +253,11 @@
 
         paymentStatusCloseButton.addEventListener('click', () => {
             paymentStatusOverlay.style.display = 'none';
+            paymentStatusOverlay.innerHTML = `
+                <div id="payment-status-icon"></div>
+                <p id="payment-status-message"></p>
+                <button id="payment-status-close" class="button">Close</button>
+            `;
             renderDashboard(); // Go back to dashboard after closing status
         });
 
@@ -271,17 +276,62 @@
 
                 // Check for pending land claims for the current user
                 if (currentUser) {
-                    const pendingLand = lands.find(land => 
-                        land.owner === currentUser.minecraftName && 
-                        !land.paid && 
-                        land.paymentCode &&
-                        (new Date().getTime() < land.expirationTime) // Only show timer for non-expired lands
+                    const pendingLand = lands.find(land =>
+                        land.owner === currentUser.minecraftName &&
+                        !land.paid &&
+                        land.paymentCode
                     );
-                    if (pendingLand && document.getElementById('fullscreen-timer-overlay').style.display !== 'flex') {
-                        document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
-                        document.getElementById('fullscreen-payment-amount').textContent = pendingLand.cost.toFixed(2);
-                        document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
-                        startFullscreenCountdown(300, pendingLand.paymentCode); // Assuming 5 minutes duration
+
+                    if (pendingLand) {
+                        if (pendingLand.status === 'failed_insufficient_balance') {
+                            // Display "not enough balance" message and options
+                            document.getElementById('fullscreen-timer-overlay').style.display = 'none'; // Hide timer if it was showing
+                            document.getElementById('payment-loading-overlay').style.display = 'none'; // Hide loading if it was showing
+                            showPaymentStatus(false, 'Insufficient balance. Please add funds or cancel.');
+                            document.getElementById('payment-status-overlay').innerHTML += `
+                                <button id="cancel-failed-payment-button" class="button">Cancel</button>
+                                <button id="wait-for-payment-button" class="button">Wait for Payment</button>
+                            `;
+                            // Add event listeners for these buttons (similar to what was added in pollPaymentStatus)
+                            document.getElementById('cancel-failed-payment-button').addEventListener('click', async () => {
+                                showLoading('Cancelling reservation...');
+                                await fetch(`${API_URL}/cancel-payment`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ paymentCode: pendingLand.paymentCode })
+                                });
+                                hideLoading();
+                                document.getElementById('payment-status-overlay').style.display = 'none';
+                                renderDashboard();
+                            });
+                            document.getElementById('wait-for-payment-button').addEventListener('click', async () => {
+                                showLoading('Resuming timer...');
+                                await fetch(`${API_URL}/resume-payment`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ paymentCode: pendingLand.paymentCode, remainingTime: pendingLand.expirationTime - new Date().getTime() }) // Pass remaining time
+                                });
+                                hideLoading();
+                                document.getElementById('payment-status-overlay').style.display = 'none';
+                                startFullscreenCountdown(Math.ceil((pendingLand.expirationTime - new Date().getTime()) / 1000), pendingLand.paymentCode); // Resume timer
+                            });
+
+                        } else if (new Date().getTime() < pendingLand.expirationTime) {
+                            // Only show timer for non-expired lands and if not already showing
+                            if (document.getElementById('fullscreen-timer-overlay').style.display !== 'flex') {
+                                document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
+                                document.getElementById('fullscreen-payment-amount').textContent = pendingLand.cost.toFixed(2);
+                                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+                                startFullscreenCountdown(Math.ceil((pendingLand.expirationTime - new Date().getTime()) / 1000), pendingLand.paymentCode); // Resume timer
+                            }
+                        } else {
+                            // Land expired, remove it (this should ideally be handled by a worker cleanup)
+                            // For now, just hide the timer
+                            document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                            document.getElementById('payment-loading-overlay').style.display = 'none';
+                            // Optionally, notify worker to remove expired land if not already handled
+                            // await fetch(`${API_URL}/cancel-payment`, { ... });
+                        }
                     } else if (!pendingLand && document.getElementById('fullscreen-timer-overlay').style.display === 'flex') {
                         // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
                         document.getElementById('fullscreen-timer-overlay').style.display = 'none';
@@ -747,6 +797,9 @@
             clearInterval(fullscreenCountdownInterval);
             clearInterval(paymentStatusPollingInterval); // Clear any existing polling interval
 
+            // Hide payment status overlay if it's visible (e.g., after resuming from insufficient balance)
+            document.getElementById('payment-status-overlay').style.display = 'none';
+
             // Show the payment loading overlay initially
             paymentLoadingOverlay.style.display = 'flex';
             document.getElementById('loading-message').textContent = 'Waiting for payment confirmation...';
@@ -796,7 +849,40 @@
                     clearInterval(paymentStatusPollingInterval); // Stop polling
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                    
+                    showPaymentSuccess();
+                } else if (currentLand && currentLand.status === 'failed_insufficient_balance') {
+                    clearInterval(fullscreenCountdownInterval);
+                    clearInterval(paymentStatusPollingInterval); // Stop polling
+                    paymentLoadingOverlay.style.display = 'none';
+                    document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                    showPaymentStatus(false, 'Insufficient balance. Please add funds or cancel.');
+                    // Show options to cancel or wait
+                    document.getElementById('payment-status-overlay').innerHTML += `
+                        <button id="cancel-failed-payment-button" class="button">Cancel</button>
+                        <button id="wait-for-payment-button" class="button">Wait for Payment</button>
+                    `;
+                    document.getElementById('cancel-failed-payment-button').addEventListener('click', async () => {
+                        showLoading('Cancelling reservation...');
+                        await fetch(`${API_URL}/cancel-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentCode })
+                        });
+                        hideLoading();
+                        document.getElementById('payment-status-overlay').style.display = 'none';
+                        renderDashboard();
+                    });
+                    document.getElementById('wait-for-payment-button').addEventListener('click', async () => {
+                        showLoading('Resuming timer...');
+                        await fetch(`${API_URL}/resume-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ paymentCode, remainingTime: currentLand.expirationTime - new Date().getTime() }) // Pass remaining time
+                        });
+                        hideLoading();
+                        document.getElementById('payment-status-overlay').style.display = 'none';
+                        startFullscreenCountdown(Math.ceil((currentLand.expirationTime - new Date().getTime()) / 1000), paymentCode); // Resume timer
+                    });
                 }
             }
             paymentStatusPollingInterval = setInterval(async () => {

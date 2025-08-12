@@ -1,9 +1,8 @@
-{
-  "users": [],
-  "lands": [],
-  "govConfig": {
-    "gap": 10,
-    "landType": "Government"
-  },
-  "governmentBalance": 0
-}
+ {
+             "users": [],
+               "lands": [],
+               "govConfig": {
+                   "gap": 10,
+                   "landType": "Government"
+              }
+            }
