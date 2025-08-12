@@ -58,32 +58,6 @@
       "purchaseTime": 1755016772543,
       "expirationTime": 1755017072543,
       "paid": true
-    },
-    {
-      "owner": "billu_backchod",
-      "coords": [
-        {
-          "x": 11111,
-          "y": 1,
-          "z": 11111
-        },
-        {
-          "x": 11111,
-          "y": 1,
-          "z": 11111
-        }
-      ],
-      "blocks": 1,
-      "cost": 11.3,
-      "baseCost": 10,
-      "tax": 1,
-      "gst": 0.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "O3U0L1",
-      "purchaseTime": 1755017151749,
-      "expirationTime": 1755017451749,
-      "paid": false
     }
   ],
   "govConfig": {
