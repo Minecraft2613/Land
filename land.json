@@ -51,12 +51,12 @@
       "paymentCode": "M803F3",
       "purchaseTime": 1754990335713,
       "expirationTime": 1754990635713,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 27895654.6
+  "governmentBalance": 102475665.9
 }
