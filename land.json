@@ -1,5 +1,11 @@
 {
-  "users": [],
+  "users": [
+    {
+      "minecraftName": "billu_backchod",
+      "minecraftEdition": "Java",
+      "wallet": 1000
+    }
+  ],
   "lands": [
     {
       "id": "0b8cf1d5-f3b2-4437-ba1e-02012508f494",
