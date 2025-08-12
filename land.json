@@ -52,6 +52,32 @@
       "purchaseTime": 1755013279053,
       "expirationTime": 1755013579053,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 473,
+          "y": 67,
+          "z": 412
+        },
+        {
+          "x": 475,
+          "y": 67,
+          "z": 408
+        }
+      ],
+      "blocks": 15,
+      "cost": 169.5,
+      "baseCost": 150,
+      "tax": 15,
+      "gst": 4.5,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "QW3XSV",
+      "purchaseTime": 1755014424272,
+      "expirationTime": 1755014724272,
+      "paid": false
     }
   ],
   "govConfig": {
