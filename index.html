@@ -751,7 +751,7 @@
             paymentLoadingOverlay.style.display = 'flex';
             document.getElementById('loading-message').textContent = 'Waiting for payment confirmation...';
 
-            fullscreenCountdownInterval = setInterval(() => {
+            fullscreenCountdownInterval = setInterval(async () => {
                 let minutes = parseInt(timer / 60, 10);
                 let seconds = parseInt(timer % 60, 10);
 
@@ -774,7 +774,7 @@
 
                     // Call the cancel-payment endpoint to remove the land data from the backend
                     try {
-                       async await fetch(`${API_URL}/cancel-payment`, {
+                       await fetch(`${API_URL}/cancel-payment`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ paymentCode })
