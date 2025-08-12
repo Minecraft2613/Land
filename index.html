@@ -774,7 +774,7 @@
 
                     // Call the cancel-payment endpoint to remove the land data from the backend
                     try {
-                        await fetch(`${API_URL}/cancel-payment`, {
+                       async await fetch(`${API_URL}/cancel-payment`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ paymentCode })
