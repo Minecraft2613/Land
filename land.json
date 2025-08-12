@@ -78,6 +78,32 @@
       "purchaseTime": 1755014424272,
       "expirationTime": 1755014724272,
       "paid": false
+    },
+    {
+      "id": "19d5849c-f38e-45ce-bd44-1d408a19423b",
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 424,
+          "y": 67,
+          "z": 416
+        },
+        {
+          "x": 415,
+          "y": 67,
+          "z": 420
+        }
+      ],
+      "blocks": 50,
+      "cost": 565,
+      "baseCost": 500,
+      "tax": 50,
+      "gst": 15,
+      "gap": 7,
+      "landType": "Player",
+      "purchaseTime": 1755014544344,
+      "expirationTime": 1755014844344,
+      "paid": false
     }
   ],
   "govConfig": {
