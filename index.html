@@ -173,7 +173,7 @@
 
     <script>
         // Constants
-        const MAX_PLAYER_LAND_BLOCKS = 14400000;
+        const MAX_PLAYER_LAND_BLOCKS = 144000000000;
         const PLAYER_PLOT_GAP = 7;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
@@ -796,7 +796,7 @@
                     clearInterval(paymentStatusPollingInterval); // Stop polling
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                    showPaymentSuccess();
+                    
                 }
             }
             paymentStatusPollingInterval = setInterval(async () => {
