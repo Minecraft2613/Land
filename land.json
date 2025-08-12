@@ -77,12 +77,12 @@
       "paymentCode": "M65KTJ",
       "purchaseTime": 1754990746683,
       "expirationTime": 1754991046683,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 102475665.9
+  "governmentBalance": 109255677.2
 }
