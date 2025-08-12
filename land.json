@@ -1,6 +1,33 @@
 {
   "users": [],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 322,
+          "y": 63,
+          "z": 444
+        },
+        {
+          "x": 316,
+          "y": 63,
+          "z": 439
+        }
+      ],
+      "blocks": 42,
+      "cost": 474.6,
+      "baseCost": 420,
+      "tax": 42,
+      "gst": 12.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "EJPRWC",
+      "purchaseTime": 1755012053317,
+      "expirationTime": 1755012353317,
+      "paid": false
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
