@@ -52,6 +52,32 @@
       "purchaseTime": 1754990335713,
       "expirationTime": 1754990635713,
       "paid": true
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 666666,
+          "y": 6,
+          "z": 6666
+        },
+        {
+          "x": 66666,
+          "y": 6,
+          "z": 6666
+        }
+      ],
+      "blocks": 600001,
+      "cost": 6780011.3,
+      "baseCost": 6000010,
+      "tax": 600001,
+      "gst": 180000.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "M65KTJ",
+      "purchaseTime": 1754990746683,
+      "expirationTime": 1754991046683,
+      "paid": false
     }
   ],
   "govConfig": {
