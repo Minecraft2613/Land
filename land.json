@@ -219,6 +219,32 @@
       "purchaseTime": 1755095441674,
       "expirationTime": 1755095741674,
       "paid": false
+    },
+    {
+      "id": "7b55f60d-4b44-4372-a58c-8d2d22fa7f35",
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 244,
+          "y": 64,
+          "z": -1
+        },
+        {
+          "x": 245,
+          "y": 64,
+          "z": 0
+        }
+      ],
+      "blocks": 4,
+      "cost": 45.2,
+      "baseCost": 40,
+      "tax": 4,
+      "gst": 1.2,
+      "gap": 7,
+      "landType": "Player",
+      "purchaseTime": 1755095740482,
+      "expirationTime": 1755096040482,
+      "paid": false
     }
   ],
   "govConfig": {
