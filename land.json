@@ -169,6 +169,32 @@
       "paid": false
     },
     {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 111111,
+          "y": 11,
+          "z": 111111
+        },
+        {
+          "x": 1111,
+          "y": 1,
+          "z": 1111
+        }
+      ],
+      "blocks": 12100220001,
+      "cost": 136732486011.3,
+      "baseCost": 121002200010,
+      "tax": 12100220001,
+      "gst": 3630066000.2999997,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "K6NRCY",
+      "purchaseTime": 1755093322783,
+      "expirationTime": 1755093622783,
+      "paid": false
+    },
+    {
       "id": "cda8ddfc-ff46-49f5-aceb-6a3d36168ac3",
       "owner": "ansh",
       "coords": [
@@ -195,113 +221,35 @@
       "paid": true
     },
     {
-      "owner": "billu_backchod",
-      "coords": [
-        {
-          "x": 150,
-          "y": 64,
-          "z": -25
-        },
-        {
-          "x": 37,
-          "y": 64,
-          "z": -99
-        }
-      ],
-      "blocks": 8550,
-      "cost": 96615,
-      "baseCost": 85500,
-      "tax": 8550,
-      "gst": 2565,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "WWWZPB",
-      "purchaseTime": 1755095441674,
-      "expirationTime": 1755095741674,
-      "paid": false
-    },
-    {
-      "id": "7b55f60d-4b44-4372-a58c-8d2d22fa7f35",
-      "owner": "billu_backchod",
-      "coords": [
-        {
-          "x": 244,
-          "y": 64,
-          "z": -1
-        },
-        {
-          "x": 245,
-          "y": 64,
-          "z": 0
-        }
-      ],
-      "blocks": 4,
-      "cost": 45.2,
-      "baseCost": 40,
-      "tax": 4,
-      "gst": 1.2,
-      "gap": 7,
-      "landType": "Player",
-      "purchaseTime": 1755095740482,
-      "expirationTime": 1755096040482,
-      "paid": false
-    },
-    {
-      "id": "46caf751-2321-40df-8c4b-efdad56492fc",
       "owner": "ansh",
       "coords": [
         {
-          "x": 338,
-          "y": 70,
-          "z": 294
+          "x": 111111111,
+          "y": 11,
+          "z": 111111
         },
         {
-          "x": 317,
-          "y": 69,
-          "z": 274
+          "x": 111111111,
+          "y": 1,
+          "z": 11111111
         }
       ],
-      "blocks": 462,
-      "cost": 5220.6,
-      "baseCost": 4620,
-      "tax": 462,
-      "gst": 138.6,
+      "blocks": 11000001,
+      "cost": 124300011.3,
+      "baseCost": 110000010,
+      "tax": 11000001,
+      "gst": 3300000.3,
       "gap": 7,
       "landType": "Player",
-      "purchaseTime": 1755097736971,
-      "expirationTime": 1755098036971,
+      "paymentCode": "Z51H1Z",
+      "purchaseTime": 1755098078907,
+      "expirationTime": 1755098378907,
       "paid": false
-    },
-    {
-      "id": "6d7ed31c-d731-4e08-97f2-b93106c469ab",
-      "owner": "Ansh-2613",
-      "coords": [
-        {
-          "x": 309,
-          "y": 70,
-          "z": 301
-        },
-        {
-          "x": 281,
-          "y": 66,
-          "z": 273
-        }
-      ],
-      "blocks": 841,
-      "cost": 9503.3,
-      "baseCost": 8410,
-      "tax": 841,
-      "gst": 252.29999999999998,
-      "gap": 7,
-      "landType": "Player",
-      "purchaseTime": 1755097856792,
-      "expirationTime": 1755098156792,
-      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 100400.50000000001
+  "governmentBalance": 90897.20000000001
 }
