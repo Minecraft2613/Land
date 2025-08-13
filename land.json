@@ -219,32 +219,6 @@
       "purchaseTime": 1755093586919,
       "expirationTime": 1755093886919,
       "paid": true
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 111111111,
-          "y": 11,
-          "z": 111111
-        },
-        {
-          "x": 111111111,
-          "y": 1,
-          "z": 11111111
-        }
-      ],
-      "blocks": 11000001,
-      "cost": 124300011.3,
-      "baseCost": 110000010,
-      "tax": 11000001,
-      "gst": 3300000.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "Z51H1Z",
-      "purchaseTime": 1755098078907,
-      "expirationTime": 1755098378907,
-      "paid": false
     }
   ],
   "govConfig": {
