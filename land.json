@@ -167,6 +167,32 @@
       "purchaseTime": 1755093272369,
       "expirationTime": 1755093572369,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 111111,
+          "y": 11,
+          "z": 111111
+        },
+        {
+          "x": 1111,
+          "y": 1,
+          "z": 1111
+        }
+      ],
+      "blocks": 12100220001,
+      "cost": 136732486011.3,
+      "baseCost": 121002200010,
+      "tax": 12100220001,
+      "gst": 3630066000.2999997,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "K6NRCY",
+      "purchaseTime": 1755093322783,
+      "expirationTime": 1755093622783,
+      "paid": false
     }
   ],
   "govConfig": {
