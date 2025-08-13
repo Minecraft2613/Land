@@ -218,12 +218,12 @@
       "landType": "Player",
       "purchaseTime": 1755093586919,
       "expirationTime": 1755093886919,
-      "paid": false
+      "paid": true
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 3017.1000000000004
+  "governmentBalance": 90897.20000000001
 }
