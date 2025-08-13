@@ -193,6 +193,32 @@
       "purchaseTime": 1755093586919,
       "expirationTime": 1755093886919,
       "paid": true
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 150,
+          "y": 64,
+          "z": -25
+        },
+        {
+          "x": 37,
+          "y": 64,
+          "z": -99
+        }
+      ],
+      "blocks": 8550,
+      "cost": 96615,
+      "baseCost": 85500,
+      "tax": 8550,
+      "gst": 2565,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "WWWZPB",
+      "purchaseTime": 1755095441674,
+      "expirationTime": 1755095741674,
+      "paid": false
     }
   ],
   "govConfig": {
