@@ -104,12 +104,13 @@
       "paymentCode": "V74YMZ",
       "purchaseTime": 1757093446207,
       "expirationTime": 1757093746207,
-      "paid": false
+      "paid": true,
+      "status": "pending"
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 2976.6
+  "governmentBalance": 3001.2
 }
