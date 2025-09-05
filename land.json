@@ -1,6 +1,33 @@
 {
   "users": [],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 11,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      ],
+      "blocks": 11,
+      "cost": 124.3,
+      "baseCost": 110,
+      "tax": 11,
+      "gst": 3.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "ZSR4C3",
+      "purchaseTime": 1757087693029,
+      "expirationTime": 1757087993029,
+      "paid": false
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
