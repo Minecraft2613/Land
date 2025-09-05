@@ -26,6 +26,32 @@
       "purchaseTime": 1757089923556,
       "expirationTime": 1757090223556,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 222,
+          "y": 22,
+          "z": 222
+        },
+        {
+          "x": 222,
+          "y": 22,
+          "z": 222
+        }
+      ],
+      "blocks": 1,
+      "cost": 24.6,
+      "baseCost": 20,
+      "tax": 2,
+      "gst": 2.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "45XL6R",
+      "purchaseTime": 1757090479575,
+      "expirationTime": 1757090779575,
+      "paid": false
     }
   ],
   "govConfig": {
