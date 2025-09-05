@@ -59,8 +59,8 @@
       "purchaseTime": 1757094588289,
       "expirationTime": 1757095189055,
       "paid": false,
-      "status": "pending",
-      "remainingTime": 6734
+      "status": "failed_insufficient_balance",
+      "remainingTime": 38206
     }
   ],
   "govConfig": {
