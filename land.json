@@ -1,8 +1,36 @@
- {
-             "users": [],
-               "lands": [],
-               "govConfig": {
-                   "gap": 10,
-                   "landType": "Government"
-              }
-            }
+{
+  "users": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 555,
+          "y": 5,
+          "z": 555
+        },
+        {
+          "x": 555,
+          "y": 5,
+          "z": 555
+        }
+      ],
+      "blocks": 1,
+      "cost": 24.6,
+      "baseCost": 20,
+      "tax": 2,
+      "gst": 2.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "PBVKYW",
+      "purchaseTime": 1757091983888,
+      "expirationTime": 1757092283888,
+      "paid": false
+    }
+  ],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  },
+  "governmentBalance": 0
+}
