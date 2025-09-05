@@ -1,76 +1,8 @@
-{
-  "users": [
-    {
-      "minecraftName": "ansh",
-      "minecraftEdition": "Java",
-      "wallet": 1000
-    },
-    {
-      "minecraftName": "minecraft2613",
-      "minecraftEdition": "Java",
-      "wallet": 1000
-    }
-  ],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        }
-      ],
-      "blocks": 1,
-      "cost": 11.3,
-      "baseCost": 10,
-      "tax": 1,
-      "gst": 0.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "RSBFCI",
-      "purchaseTime": 1757093830642,
-      "expirationTime": 1757094430642,
-      "paid": true,
-      "status": "pending"
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 1111111111,
-          "y": 1,
-          "z": 111111
-        },
-        {
-          "x": 11111111,
-          "y": 1,
-          "z": 111111
-        }
-      ],
-      "blocks": 1100000001,
-      "cost": 12430000011.3,
-      "baseCost": 11000000010,
-      "tax": 1100000001,
-      "gst": 330000000.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "GKLVFF",
-      "purchaseTime": 1757094588289,
-      "expirationTime": 1757095190595,
-      "paid": true,
-      "status": "pending",
-      "remainingTime": 69744
-    }
-  ],
-  "govConfig": {
-    "gap": 10,
-    "landType": "Government"
-  },
-  "governmentBalance": 12430000022.599998
-}
+ {
+             "users": [],
+               "lands": [],
+               "govConfig": {
+                   "gap": 10,
+                   "landType": "Government"
+              }
+            }
