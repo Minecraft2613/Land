@@ -184,7 +184,24 @@
         let govConfig = { gap: 10, landType: 'Government' };
         let governmentBalance = 0;
         let selectedPlayerForManagement = null;
-        let paymentSuccessHandled = false; // New flag to prevent multiple success triggers
+        let paymentSuccessHandled = false;
+        let hasPendingPayment = false; // New global state
+
+        function showFullscreenTimerOverlay(paymentCode, cost, expirationTime) {
+            document.getElementById('fullscreen-payment-code').textContent = paymentCode;
+            document.getElementById('fullscreen-payment-amount').textContent = cost.toFixed(2);
+            document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+            document.getElementById('payment-loading-overlay').style.display = 'flex'; // Show loading too
+            document.getElementById('loading-message').textContent = 'Waiting for payment confirmation...';
+
+            const durationInSeconds = Math.ceil((expirationTime - new Date().getTime()) / 1000);
+            startFullscreenCountdown(durationInSeconds, paymentCode);
+
+            // Hide all other views
+            views.forEach(view => {
+                view.classList.remove('active');
+            });
+        }
 
         // DOM elements
         const views = document.querySelectorAll('.view-section');
@@ -283,6 +300,7 @@
                     );
 
                     if (pendingLand) {
+                        hasPendingPayment = true; // Set flag
                         if (pendingLand.status === 'failed_insufficient_balance') {
                             // Display "not enough balance" message and options
                             document.getElementById('fullscreen-timer-overlay').style.display = 'none'; // Hide timer if it was showing
@@ -317,25 +335,30 @@
                             });
 
                         } else if (new Date().getTime() < pendingLand.expirationTime) {
-                            // Only show timer for non-expired lands and if not already showing
-                            if (document.getElementById('fullscreen-timer-overlay').style.display !== 'flex') {
-                                document.getElementById('fullscreen-payment-code').textContent = pendingLand.paymentCode;
-                                document.getElementById('fullscreen-payment-amount').textContent = pendingLand.cost.toFixed(2);
-                                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
-                                startFullscreenCountdown(Math.ceil((pendingLand.expirationTime - new Date().getTime()) / 1000), pendingLand.paymentCode); // Resume timer
-                            }
+                            // Only show timer for non-expired lands
+                            showFullscreenTimerOverlay(pendingLand.paymentCode, pendingLand.cost, pendingLand.expirationTime);
+                            return; // Stop further rendering of dashboard/other views
                         } else {
-                            // Land expired, remove it (this should ideally be handled by a worker cleanup)
-                            // For now, just hide the timer
+                            // Land expired, remove it (make this mandatory)
                             document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                             document.getElementById('payment-loading-overlay').style.display = 'none';
-                            // Optionally, notify worker to remove expired land if not already handled
-                            // await fetch(`${API_URL}/cancel-payment`, { ... });
+                            showLoading('Cleaning up expired reservation...');
+                            await fetch(`${API_URL}/cancel-payment`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ paymentCode: pendingLand.paymentCode })
+                            });
+                            hideLoading();
+                            hasPendingPayment = false; // No longer pending
+                            // Do not return, allow dashboard to render
                         }
-                    } else if (!pendingLand && document.getElementById('fullscreen-timer-overlay').style.display === 'flex') {
-                        // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
-                        document.getElementById('fullscreen-timer-overlay').style.display = 'none';
-                        document.getElementById('payment-loading-overlay').style.display = 'none';
+                    } else {
+                        hasPendingPayment = false; // No pending land
+                        if (document.getElementById('fullscreen-timer-overlay').style.display === 'flex') {
+                            // If no pending land, and overlay is visible, hide it (e.g., if payment was just completed)
+                            document.getElementById('fullscreen-timer-overlay').style.display = 'none';
+                            document.getElementById('payment-loading-overlay').style.display = 'none';
+                        }
                     }
                 }
             } catch (e) {
@@ -379,9 +402,9 @@
             const blockDepth = Math.abs(numericC1.z - numericC2.z) + 1;
             const totalBlocks = blockWidth * blockDepth;
 
-            const baseCost = totalBlocks * 20;
+            const baseCost = totalBlocks * 10;
             const tax = baseCost * 0.10;
-            const gst = baseCost * 0.13;
+            const gst = baseCost * 0.03;
             const totalCost = baseCost + tax + gst;
             
             return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
@@ -476,11 +499,27 @@
         // --- Rendering Functions ---
         function renderDashboard() {
             if (!currentUser) return;
+            
+            if (hasPendingPayment) {
+                // If there's a pending payment, force display of the fullscreen timer overlay
+                // The showFullscreenTimerOverlay function already handles hiding other views
+                // We don't need to call setView here, as loadData already did it or will do it.
+                return;
+            }
+
             setView('dashboard-view');
             dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}!`; // Removed balance display
             
             // Check for government access
             govPanelButton.style.display = currentUser.minecraftName.toLowerCase() === 'minecraft2613' ? 'block' : 'none';
+
+            // Disable Buy New Land button if there's a pending payment
+            buyLandButton.disabled = hasPendingPayment;
+            if (hasPendingPayment) {
+                buyLandButton.textContent = 'Pending Payment...';
+            } else {
+                buyLandButton.textContent = 'Buy New Land';
+            }
 
             // Filter lands for the current user and render them
             const userPlots = lands.filter(land => land.owner === currentUser.minecraftName);
@@ -640,6 +679,11 @@
         buyLandForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (hasPendingPayment) {
+                showMessage(buyLandMessages, 'You have a pending land reservation. Please complete or cancel it first.', 'error');
+                return;
+            }
+
             const button = buyLandSubmitButton;
             button.disabled = true;
 
@@ -664,35 +708,44 @@
                     return;
                 }
 
-                const paymentCode = generatePaymentCode();
-                const newLand = {
-                    owner: currentUser.minecraftName,
-                    coords: newCoords,
-                    blocks: calculatedDetails.blocks,
-                    cost: calculatedDetails.cost,
-                    baseCost: calculatedDetails.baseCost,
-                    tax: calculatedDetails.tax,
-                    gst: calculatedDetails.gst,
-                    gap: PLAYER_PLOT_GAP,
-                    landType: 'Player',
-                    paymentCode: paymentCode,
-                    purchaseTime: new Date().getTime(),
-                    expirationTime: new Date().getTime() + 300 * 1000, // 5 minutes from now
-                    paid: false
-                };
-
-                lands.push(newLand);
-                
                 showLoading('Reserving land...');
-                await saveData();
-                hideLoading();
+                const response = await fetch(`${API_URL}/reserve-land-web`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        owner: currentUser.minecraftName,
+                        coords: newCoords,
+                        blocks: calculatedDetails.blocks,
+                        cost: calculatedDetails.cost,
+                        baseCost: calculatedDetails.baseCost,
+                        tax: calculatedDetails.tax,
+                        gst: calculatedDetails.gst,
+                        gap: PLAYER_PLOT_GAP,
+                        landType: 'Player'
+                    })
+                });
 
-                // Show fullscreen timer
-                document.getElementById('fullscreen-payment-code').textContent = paymentCode;
-                document.getElementById('fullscreen-payment-amount').textContent = calculatedDetails.cost.toFixed(2);
-                document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+                const result = await response.json();
 
-                startFullscreenCountdown(300, paymentCode); // 5 minutes in seconds
+                if (result.success) {
+                    hideLoading();
+                    // Update lands array with the newly reserved land (optional, as loadData will fetch it)
+                    // For immediate UI update, we can add it here, but loadData will ensure consistency
+                    // lands.push({ ...result.land, paymentCode: result.paymentCode, expirationTime: result.expirationTime });
+
+                    // Show fullscreen timer
+                    document.getElementById('fullscreen-payment-code').textContent = result.paymentCode;
+                    document.getElementById('fullscreen-payment-amount').textContent = result.cost.toFixed(2);
+                    document.getElementById('fullscreen-timer-overlay').style.display = 'flex';
+
+                    // Calculate duration from server-provided expirationTime
+                    const durationInSeconds = Math.ceil((result.expirationTime - new Date().getTime()) / 1000);
+                    startFullscreenCountdown(durationInSeconds, result.paymentCode); 
+
+                } else {
+                    hideLoading();
+                    showPaymentStatus(false, result.message || 'An error occurred during reservation.');
+                }
 
             } catch (error) {
                 hideLoading();
@@ -780,9 +833,7 @@
             }
         });
         
-        function generatePaymentCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
-        }
+        
 
         let fullscreenCountdownInterval;
         let paymentStatusPollingInterval; // New interval for polling payment status
@@ -850,6 +901,7 @@
                     paymentLoadingOverlay.style.display = 'none';
                     document.getElementById('fullscreen-timer-overlay').style.display = 'none';
                     showPaymentSuccess();
+                    hasPendingPayment = false; // Set flag to false on successful payment
                 } else if (currentLand && currentLand.status === 'failed_insufficient_balance') {
                     clearInterval(fullscreenCountdownInterval);
                     clearInterval(paymentStatusPollingInterval); // Stop polling
@@ -915,6 +967,8 @@
                         showPaymentStatus(false, 'Payment Cancelled');
                         const audio = new Audio('https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3'); // A distinct failure sound
                         audio.play();
+                        hasPendingPayment = false; // Set flag to false on cancellation
+                        renderDashboard(); // Go back to dashboard
                     } else {
                         showPaymentStatus(false, 'Failed to cancel payment.');
                     }
