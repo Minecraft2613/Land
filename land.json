@@ -57,9 +57,9 @@
       "landType": "Player",
       "paymentCode": "GKLVFF",
       "purchaseTime": 1757094588289,
-      "expirationTime": 1757095189819,
+      "expirationTime": 1757095190595,
       "paid": false,
-      "status": "failed_insufficient_balance",
+      "status": "pending",
       "remainingTime": 69744
     }
   ],
