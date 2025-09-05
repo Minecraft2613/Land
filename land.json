@@ -58,7 +58,7 @@
       "paymentCode": "GKLVFF",
       "purchaseTime": 1757094588289,
       "expirationTime": 1757095190595,
-      "paid": false,
+      "paid": true,
       "status": "pending",
       "remainingTime": 69744
     }
@@ -67,5 +67,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 11.3
+  "governmentBalance": 12430000022.599998
 }
