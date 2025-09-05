@@ -52,6 +52,32 @@
       "purchaseTime": 1757088208338,
       "expirationTime": 1757088508338,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 11111,
+          "y": 1,
+          "z": 111111
+        },
+        {
+          "x": 11111,
+          "y": 1,
+          "z": 111111
+        }
+      ],
+      "blocks": 1,
+      "cost": 11.3,
+      "baseCost": 10,
+      "tax": 1,
+      "gst": 0.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "EHFJNR",
+      "purchaseTime": 1757088366446,
+      "expirationTime": 1757088666446,
+      "paid": false
     }
   ],
   "govConfig": {
