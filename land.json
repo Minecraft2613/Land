@@ -57,9 +57,9 @@
       "landType": "Player",
       "paymentCode": "HMY899",
       "purchaseTime": 1757094011126,
-      "expirationTime": 1757094611126,
+      "expirationTime": 1757094611852,
       "paid": false,
-      "status": "failed_insufficient_balance",
+      "status": "pending",
       "remainingTime": 11916
     }
   ],
