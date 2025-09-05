@@ -321,6 +321,32 @@
       "purchaseTime": 1757081766317,
       "expirationTime": 1757082066317,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 3333333,
+          "y": 3333,
+          "z": 33333331
+        },
+        {
+          "x": 3333333,
+          "y": 33,
+          "z": 3333333
+        }
+      ],
+      "blocks": 29999999,
+      "cost": 338999988.7,
+      "baseCost": 299999990,
+      "tax": 29999999,
+      "gst": 8999999.7,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "L4SSHV",
+      "purchaseTime": 1757083285848,
+      "expirationTime": 1757083585848,
+      "paid": false
     }
   ],
   "govConfig": {
