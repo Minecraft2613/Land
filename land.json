@@ -33,34 +33,6 @@
       "expirationTime": 1757094430642,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 1111111111,
-          "y": 111111111,
-          "z": 111111111
-        },
-        {
-          "x": 111111111,
-          "y": 1111,
-          "z": 111111111
-        }
-      ],
-      "blocks": 1000000001,
-      "cost": 11300000011.3,
-      "baseCost": 10000000010,
-      "tax": 1000000001,
-      "gst": 300000000.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "HMY899",
-      "purchaseTime": 1757094011126,
-      "expirationTime": 1757094611852,
-      "paid": false,
-      "status": "pending",
-      "remainingTime": 11916
     }
   ],
   "govConfig": {
