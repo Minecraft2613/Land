@@ -31,7 +31,7 @@
       "paymentCode": "RSBFCI",
       "purchaseTime": 1757093830642,
       "expirationTime": 1757094430642,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -39,5 +39,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 11.3
 }
