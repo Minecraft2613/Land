@@ -104,6 +104,32 @@
       "purchaseTime": 1757088392847,
       "expirationTime": 1757088692847,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 3333,
+          "y": 33,
+          "z": 333
+        },
+        {
+          "x": 333,
+          "y": 33,
+          "z": 333
+        }
+      ],
+      "blocks": 3001,
+      "cost": 73824.6,
+      "baseCost": 60020,
+      "tax": 6002,
+      "gst": 7802.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "VWMIL7",
+      "purchaseTime": 1757089000173,
+      "expirationTime": 1757089300173,
+      "paid": false
     }
   ],
   "govConfig": {
