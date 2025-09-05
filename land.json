@@ -347,6 +347,32 @@
       "purchaseTime": 1757083285848,
       "expirationTime": 1757083585848,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 2222222222,
+          "y": 2,
+          "z": 2222222222
+        },
+        {
+          "x": 2222222222,
+          "y": 2,
+          "z": 2222222222
+        }
+      ],
+      "blocks": 1,
+      "cost": 11.3,
+      "baseCost": 10,
+      "tax": 1,
+      "gst": 0.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "98DB9O",
+      "purchaseTime": 1757084001858,
+      "expirationTime": 1757084301858,
+      "paid": false
     }
   ],
   "govConfig": {
