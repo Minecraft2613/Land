@@ -6,7 +6,35 @@
       "wallet": 1000
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        }
+      ],
+      "blocks": 1,
+      "cost": 11.3,
+      "baseCost": 10,
+      "tax": 1,
+      "gst": 0.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "RSBFCI",
+      "purchaseTime": 1757093830642,
+      "expirationTime": 1757094430642,
+      "paid": false,
+      "status": "pending"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
