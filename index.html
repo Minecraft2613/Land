@@ -379,9 +379,9 @@
             const blockDepth = Math.abs(numericC1.z - numericC2.z) + 1;
             const totalBlocks = blockWidth * blockDepth;
 
-            const baseCost = totalBlocks * 10;
+            const baseCost = totalBlocks * 20;
             const tax = baseCost * 0.10;
-            const gst = baseCost * 0.03;
+            const gst = baseCost * 0.13;
             const totalCost = baseCost + tax + gst;
             
             return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
