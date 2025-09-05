@@ -51,12 +51,13 @@
       "paymentCode": "AZJCY4",
       "purchaseTime": 1757093022824,
       "expirationTime": 1757093322824,
-      "paid": false
+      "paid": true,
+      "status": "pending"
     }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 2976.6
 }
