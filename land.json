@@ -79,6 +79,32 @@
       "purchaseTime": 1757093409631,
       "expirationTime": 1757093709631,
       "paid": false
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 4444,
+          "y": 4,
+          "z": 4444
+        },
+        {
+          "x": 4444,
+          "y": 4,
+          "z": 4444
+        }
+      ],
+      "blocks": 1,
+      "cost": 24.6,
+      "baseCost": 20,
+      "tax": 2,
+      "gst": 2.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "V74YMZ",
+      "purchaseTime": 1757093446207,
+      "expirationTime": 1757093746207,
+      "paid": false
     }
   ],
   "govConfig": {
