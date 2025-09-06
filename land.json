@@ -100,7 +100,7 @@
       "paymentCode": "0FEOII",
       "purchaseTime": 1757125731476,
       "expirationTime": 1757126331476,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -108,5 +108,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 180073.3
+  "governmentBalance": 1149583.9
 }
