@@ -75,6 +75,33 @@
       "expirationTime": 1757123005758,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "ItzWhite7778",
+      "coords": [
+        {
+          "x": 344,
+          "y": 62,
+          "z": -130
+        },
+        {
+          "x": 194,
+          "y": 69,
+          "z": 130
+        }
+      ],
+      "blocks": 39411,
+      "cost": 969510.6,
+      "baseCost": 788220,
+      "tax": 78822,
+      "gst": 102468.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "0FEOII",
+      "purchaseTime": 1757125731476,
+      "expirationTime": 1757126331476,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
