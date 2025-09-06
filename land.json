@@ -68,7 +68,7 @@
       "paymentCode": "APGJCF",
       "purchaseTime": 1757122405758,
       "expirationTime": 1757123005758,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -76,5 +76,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 124.3
+  "governmentBalance": 180073.3
 }
