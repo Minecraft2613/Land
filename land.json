@@ -107,6 +107,33 @@
       "expirationTime": 1757126331476,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": -355,
+          "y": 64,
+          "z": 17
+        },
+        {
+          "x": -494,
+          "y": 67,
+          "z": -70
+        }
+      ],
+      "blocks": 12320,
+      "cost": 303072,
+      "baseCost": 246400,
+      "tax": 24640,
+      "gst": 32032,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "A3YWOE",
+      "purchaseTime": 1757129058356,
+      "expirationTime": 1757129658356,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
