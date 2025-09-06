@@ -43,6 +43,33 @@
       "expirationTime": 1757095779557,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "itzyash6503",
+      "coords": [
+        {
+          "x": 36,
+          "y": 64,
+          "z": -105
+        },
+        {
+          "x": -58,
+          "y": 64,
+          "z": -29
+        }
+      ],
+      "blocks": 7315,
+      "cost": 179949,
+      "baseCost": 146300,
+      "tax": 14630,
+      "gst": 19019,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "APGJCF",
+      "purchaseTime": 1757122405758,
+      "expirationTime": 1757123005758,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
