@@ -132,7 +132,7 @@
       "paymentCode": "A3YWOE",
       "purchaseTime": 1757129058356,
       "expirationTime": 1757129658356,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -140,5 +140,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1149583.9
+  "governmentBalance": 1452655.9
 }
