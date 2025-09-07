@@ -139,6 +139,33 @@
       "expirationTime": 1757129658356,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 41,
+          "y": 63,
+          "z": -27
+        },
+        {
+          "x": 149,
+          "y": 63,
+          "z": -100
+        }
+      ],
+      "blocks": 8066,
+      "cost": 91145.8,
+      "baseCost": 80660,
+      "tax": 8066,
+      "gst": 2419.7999999999997,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "QDUDI6",
+      "purchaseTime": 1757226465673,
+      "expirationTime": 1757227065673,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
