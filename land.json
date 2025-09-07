@@ -164,7 +164,7 @@
       "paymentCode": "Q01FMV",
       "purchaseTime": 1757228670831,
       "expirationTime": 1757229270831,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -172,5 +172,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1452655.9
+  "governmentBalance": 1550559.0999999999
 }
