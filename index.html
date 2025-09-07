@@ -174,7 +174,7 @@
     <script>
         // Constants
         const MAX_PLAYER_LAND_BLOCKS = 144000000000;
-        const PLAYER_PLOT_GAP = 7;
+        const PLAYER_PLOT_GAP = 0;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
         // Global state variables
@@ -288,7 +288,7 @@
                 const data = await response.json();
                 users = data.users || [];
                 lands = data.lands || [];
-                govConfig = data.govConfig || { gap: 10, landType: 'Government' };
+                govConfig = data.govConfig || { gap: 0, landType: 'Government' };
                 governmentBalance = data.governmentBalance || 0;
 
                 // Check for pending land claims for the current user
