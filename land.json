@@ -190,9 +190,9 @@
       "landType": "Player",
       "paymentCode": "1SMROZ",
       "purchaseTime": 1757228986350,
-      "expirationTime": 1757229586350,
+      "expirationTime": 1757229611654,
       "paid": false,
-      "status": "failed_insufficient_balance",
+      "status": "pending",
       "remainingTime": 9312
     }
   ],
