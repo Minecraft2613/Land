@@ -139,6 +139,33 @@
       "expirationTime": 1757129658356,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "ansh",
+      "coords": [
+        {
+          "x": 47,
+          "y": 63,
+          "z": -27
+        },
+        {
+          "x": 149,
+          "y": 63,
+          "z": -100
+        }
+      ],
+      "blocks": 7622,
+      "cost": 86128.6,
+      "baseCost": 76220,
+      "tax": 7622,
+      "gst": 2286.6,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "UHSQIG",
+      "purchaseTime": 1757226446441,
+      "expirationTime": 1757227046441,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
