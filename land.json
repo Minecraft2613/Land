@@ -139,33 +139,6 @@
       "expirationTime": 1757129658356,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": -36,
-          "y": 64,
-          "z": 105
-        },
-        {
-          "x": 58,
-          "y": 64,
-          "z": 29
-        }
-      ],
-      "blocks": 7315,
-      "cost": 82659.5,
-      "baseCost": 73150,
-      "tax": 7315,
-      "gst": 2194.5,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "DGG7QQ",
-      "purchaseTime": 1757226547048,
-      "expirationTime": 1757227147048,
-      "paid": false,
-      "status": "pending"
     }
   ],
   "govConfig": {
