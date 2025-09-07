@@ -191,7 +191,7 @@
       "paymentCode": "1SMROZ",
       "purchaseTime": 1757228986350,
       "expirationTime": 1757229609737,
-      "paid": false,
+      "paid": true,
       "status": "pending",
       "remainingTime": 9312
     }
@@ -200,5 +200,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1550559.0999999999
+  "governmentBalance": 1880519.0999999999
 }
