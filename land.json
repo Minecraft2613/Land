@@ -139,6 +139,33 @@
       "expirationTime": 1757129658356,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 150,
+          "y": 64,
+          "z": -25
+        },
+        {
+          "x": 37,
+          "y": 64,
+          "z": -100
+        }
+      ],
+      "blocks": 8664,
+      "cost": 97903.2,
+      "baseCost": 86640,
+      "tax": 8664,
+      "gst": 2599.2,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "Q01FMV",
+      "purchaseTime": 1757228670831,
+      "expirationTime": 1757229270831,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
