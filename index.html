@@ -174,7 +174,7 @@
     <script>
         // Constants
         const MAX_PLAYER_LAND_BLOCKS = 144000000000;
-        const PLAYER_PLOT_GAP = 0;
+        const PLAYER_PLOT_GAP = 7;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
 
         // Global state variables
@@ -288,7 +288,7 @@
                 const data = await response.json();
                 users = data.users || [];
                 lands = data.lands || [];
-                govConfig = data.govConfig || { gap: 0, landType: 'Government' };
+                govConfig = data.govConfig || { gap: 10, landType: 'Government' };
                 governmentBalance = data.governmentBalance || 0;
 
                 // Check for pending land claims for the current user
@@ -402,26 +402,27 @@
             const blockDepth = Math.abs(numericC1.z - numericC2.z) + 1;
             const totalBlocks = blockWidth * blockDepth;
 
-            const baseCost = totalBlocks * 20;
+            const baseCost = totalBlocks * 10;
             const tax = baseCost * 0.10;
-            const gst = baseCost * 0.13;
+            const gst = baseCost * 0.03;
             const totalCost = baseCost + tax + gst;
             
             return { blocks: totalBlocks, cost: totalCost, baseCost, tax, gst, isValid: true };
         };
 
         const isColliding = (newPlotCoords, existingLands, newPlotType, newPlotGap) => {
-            const numericNewPlotCoords = newPlotCoords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) }));
+            const numericNewPlotCoords = newPlotCoords.map(c => ({ x: Math.abs(parseFloat(c.x)), y: parseFloat(c.y), z: Math.abs(parseFloat(c.z)) }));
             const newMinX = Math.min(numericNewPlotCoords[0].x, numericNewPlotCoords[1].x);
             const newMaxX = Math.max(numericNewPlotCoords[0].x, numericNewPlotCoords[1].x);
             const newMinZ = Math.min(numericNewPlotCoords[0].z, numericNewPlotCoords[1].z);
             const newMaxZ = Math.max(numericNewPlotCoords[0].z, numericNewPlotCoords[1].z);
 
             for (const existingLand of existingLands) {
-                const existingMinX = Math.min(existingLand.coords[0].x, existingLand.coords[1].x);
-                const existingMaxX = Math.max(existingLand.coords[0].x, existingLand.coords[1].x);
-                const existingMinZ = Math.min(existingLand.coords[0].z, existingLand.coords[1].z);
-                const existingMaxZ = Math.max(existingLand.coords[0].z, existingLand.coords[1].z);
+                const numericExistingLandCoords = existingLand.coords.map(c => ({ x: Math.abs(parseFloat(c.x)), y: parseFloat(c.y), z: Math.abs(parseFloat(c.z)) }));
+                const existingMinX = Math.min(numericExistingLandCoords[0].x, numericExistingLandCoords[1].x);
+                const existingMaxX = Math.max(numericExistingLandCoords[0].x, numericExistingLandCoords[1].x);
+                const existingMinZ = Math.min(numericExistingLandCoords[0].z, numericExistingLandCoords[1].z);
+                const existingMaxZ = Math.max(numericExistingLandCoords[0].z, numericExistingLandCoords[1].z);
 
                 let effectiveNewPlotGap = newPlotGap;
                 let effectiveExistingPlotGap = existingLand.gap;
