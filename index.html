@@ -428,18 +428,19 @@
                 let effectiveExistingPlotGap = existingLand.gap;
 
                 // Determine effective gap based on plot types
-                if (newPlotType === 'Player' && existingLand.landType === 'Player') {
-                    // Player vs Player: use PLAYER_PLOT_GAP for both
-                    effectiveNewPlotGap = PLAYER_PLOT_GAP;
-                    effectiveExistingPlotGap = PLAYER_PLOT_GAP;
+                if (newPlotType === 'Player') {
+                    effectiveNewPlotGap = 0; // No gap for new player plots
+                }
+                if (existingLand.landType === 'Player') {
+                    effectiveExistingPlotGap = 0; // No gap for existing player plots
                 } else if (newPlotType === 'Player' && existingLand.landType !== 'Player') {
-                    // Player vs Gov: use PLAYER_PLOT_GAP for player, existingLand.gap for gov
-                    effectiveNewPlotGap = PLAYER_PLOT_GAP;
+                    // Player vs Gov: use 0 for player, existingLand.gap for gov
+                    effectiveNewPlotGap = 0;
                     effectiveExistingPlotGap = existingLand.gap;
                 } else if (newPlotType !== 'Player' && existingLand.landType === 'Player') {
-                    // Gov vs Player: use newPlotGap for gov, PLAYER_PLOT_GAP for player
+                    // Gov vs Player: use newPlotGap for gov, 0 for player
                     effectiveNewPlotGap = newPlotGap;
-                    effectiveExistingPlotGap = PLAYER_PLOT_GAP;
+                    effectiveExistingPlotGap = 0;
                 } else if (newPlotType !== 'Player' && existingLand.landType !== 'Player') {
                     // Gov vs Gov: no collision check (effective gap 0)
                     effectiveNewPlotGap = 0;
