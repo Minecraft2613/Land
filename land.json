@@ -139,33 +139,6 @@
       "expirationTime": 1757129658356,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 136,
-          "y": 63,
-          "z": -99
-        },
-        {
-          "x": 59,
-          "y": 63,
-          "z": -27
-        }
-      ],
-      "blocks": 5694,
-      "cost": 140072.4,
-      "baseCost": 113880,
-      "tax": 11388,
-      "gst": 14804.4,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "GMPJ6T",
-      "purchaseTime": 1757223922305,
-      "expirationTime": 1757224522305,
-      "paid": false,
-      "status": "pending"
     }
   ],
   "govConfig": {
