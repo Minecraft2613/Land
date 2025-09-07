@@ -166,6 +166,33 @@
       "expirationTime": 1757229270831,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 191,
+          "y": 63,
+          "z": 303
+        },
+        {
+          "x": 92,
+          "y": 63,
+          "z": 594
+        }
+      ],
+      "blocks": 29200,
+      "cost": 329960,
+      "baseCost": 292000,
+      "tax": 29200,
+      "gst": 8760,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "1SMROZ",
+      "purchaseTime": 1757228986350,
+      "expirationTime": 1757229586350,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
