@@ -199,6 +199,33 @@
       "paid": true,
       "status": "pending",
       "remainingTime": 9312
+    },
+    {
+      "owner": "ItzWhite7778",
+      "coords": [
+        {
+          "x": 167,
+          "y": 64,
+          "z": 72
+        },
+        {
+          "x": -162,
+          "y": 64,
+          "z": 286
+        }
+      ],
+      "blocks": 70950,
+      "cost": 801735,
+      "baseCost": 709500,
+      "tax": 70950,
+      "gst": 21285,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "8A7Z8W",
+      "purchaseTime": 1757828051658,
+      "expirationTime": 1757828651658,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
