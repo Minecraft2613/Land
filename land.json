@@ -224,7 +224,7 @@
       "paymentCode": "8A7Z8W",
       "purchaseTime": 1757828051658,
       "expirationTime": 1757828651658,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -232,5 +232,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1880519.0999999999
+  "governmentBalance": 2682254.0999999996
 }
