@@ -278,7 +278,7 @@
       "paymentCode": "6VAJK3",
       "purchaseTime": 1759210847041,
       "expirationTime": 1759211447041,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -286,5 +286,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 3045323.0999999996
+  "governmentBalance": 3266803.0999999996
 }
