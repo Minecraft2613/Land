@@ -226,6 +226,33 @@
       "expirationTime": 1757828651658,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 461,
+          "y": 64,
+          "z": -339
+        },
+        {
+          "x": 224,
+          "y": 71,
+          "z": -473
+        }
+      ],
+      "blocks": 32130,
+      "cost": 363069,
+      "baseCost": 321300,
+      "tax": 32130,
+      "gst": 9639,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "XOTSJD",
+      "purchaseTime": 1759208680839,
+      "expirationTime": 1759209280839,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
