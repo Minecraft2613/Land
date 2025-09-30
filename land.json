@@ -251,7 +251,7 @@
       "paymentCode": "XOTSJD",
       "purchaseTime": 1759208680839,
       "expirationTime": 1759209280839,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -259,5 +259,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 2682254.0999999996
+  "governmentBalance": 3045323.0999999996
 }
