@@ -253,6 +253,33 @@
       "expirationTime": 1759209280839,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": -396,
+          "y": 64,
+          "z": 288
+        },
+        {
+          "x": -507,
+          "y": 64,
+          "z": 462
+        }
+      ],
+      "blocks": 19600,
+      "cost": 221480,
+      "baseCost": 196000,
+      "tax": 19600,
+      "gst": 5880,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "6VAJK3",
+      "purchaseTime": 1759210847041,
+      "expirationTime": 1759211447041,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
