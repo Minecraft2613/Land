@@ -6,35 +6,7 @@
       "wallet": 1000
     }
   ],
-  "lands": [
-    {
-      "owner": "ansh",
-      "coords": [
-        {
-          "x": 11,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        }
-      ],
-      "blocks": 11,
-      "cost": 124.3,
-      "baseCost": 110,
-      "tax": 11,
-      "gst": 3.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "MW6X2S",
-      "purchaseTime": 1762321639202,
-      "expirationTime": 1762322239202,
-      "paid": false,
-      "status": "pending"
-    }
-  ],
+  "lands": [],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
