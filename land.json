@@ -11,35 +11,7 @@
       "wallet": 1000
     }
   ],
-  "lands": [
-    {
-      "owner": "billu_backchod",
-      "coords": [
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        }
-      ],
-      "blocks": 1,
-      "cost": 11.3,
-      "baseCost": 10,
-      "tax": 1,
-      "gst": 0.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "0LEE9P",
-      "purchaseTime": 1762321663118,
-      "expirationTime": 1762322263118,
-      "paid": false,
-      "status": "pending"
-    }
-  ],
+  "lands": [],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
