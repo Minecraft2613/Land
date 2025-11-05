@@ -11,7 +11,35 @@
       "wallet": 1000
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 5805,
+          "y": 1,
+          "z": 4768
+        },
+        {
+          "x": 5505,
+          "y": 1,
+          "z": 5068
+        }
+      ],
+      "blocks": 90601,
+      "cost": 1023791.3,
+      "baseCost": 906010,
+      "tax": 90601,
+      "gst": 27180.3,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "EQ8TU3",
+      "purchaseTime": 1762321720142,
+      "expirationTime": 1762322320142,
+      "paid": false,
+      "status": "pending"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
