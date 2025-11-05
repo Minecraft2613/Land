@@ -1,1 +1,15 @@
-[]
+{
+  "users": [
+    {
+      "minecraftName": "ansh",
+      "minecraftEdition": "Java",
+      "wallet": 1000
+    }
+  ],
+  "lands": [],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  },
+  "governmentBalance": 0
+}
