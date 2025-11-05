@@ -36,7 +36,7 @@
       "paymentCode": "EQ8TU3",
       "purchaseTime": 1762321720142,
       "expirationTime": 1762322320142,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -44,5 +44,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 0
+  "governmentBalance": 1023791.3
 }
