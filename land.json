@@ -70,7 +70,7 @@
       "paymentCode": "VJLU87",
       "purchaseTime": 1770828903340,
       "expirationTime": 1770829503340,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -78,5 +78,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1023791.3
+  "governmentBalance": 1023802.6000000001
 }
