@@ -1,6 +1,6 @@
 // Hardcoded GitHub repository details
-const REPO_OWNER = 'Minecraft2613';
-const REPO_NAME = 'respo-Land';
+const REPO_OWNER = 'minecraft2613';
+const REPO_NAME = 'Land';
 const FILE_PATH = 'land.json';
 
 // IMPORTANT: This script expects you to set the GITHUB_TOKEN environment variable
@@ -26,7 +26,6 @@ async function handleRequest(request) {
 
   // Centralized error handler
   const handleError = (e, status = 500) => {
-    console.error("Worker Error:", e);
     const errorDetails = {
       message: e.message,
       stack: e.stack,
@@ -36,6 +35,35 @@ async function handleRequest(request) {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   };
+
+  // Helper function to check for 2D land overlap
+  function checkOverlap(land1Coords, land2Coords) {
+    const getMinMax = (coords) => {
+      const xCoords = coords.map(c => c.x);
+      const zCoords = coords.map(c => c.z);
+      return {
+        minX: Math.min(...xCoords),
+        maxX: Math.max(...xCoords),
+        minZ: Math.min(...zCoords),
+        maxZ: Math.max(...zCoords),
+      };
+    };
+
+    const rect1 = getMinMax(land1Coords);
+    const rect2 = getMinMax(land2Coords);
+
+    // Check for overlap on X axis
+    if (rect1.minX > rect2.maxX || rect2.minX > rect1.maxX) {
+      return false;
+    }
+
+    // Check for overlap on Z axis
+    if (rect1.minZ > rect2.maxZ || rect2.minZ > rect1.maxZ) {
+      return false;
+    }
+
+    return true; // Overlap detected
+  }
 
   // Validate the GITHUB_TOKEN at the start of the request handling.
   if (typeof GITHUB_TOKEN === 'undefined' || !GITHUB_TOKEN) {
@@ -55,7 +83,6 @@ async function handleRequest(request) {
       });
       
       if (response.status === 404) {
-        // Updated defaultData to include governmentBalance
         const defaultData = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 };
         return new Response(JSON.stringify(defaultData), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -109,7 +136,7 @@ async function handleRequest(request) {
         },
         body: JSON.stringify({
           message: 'Update land.json via Cloudflare Worker',
-          content: btoa(unescape(encodeURIComponent(newContentString))),
+          content: btoa(newContentString),
           sha: fileSha
         })
       });
@@ -128,13 +155,14 @@ async function handleRequest(request) {
     }
   }
 
-  // POST claim data route (for land claims from plugin)
-  if (path === '/claim' && request.method === 'POST') {
+  // POST route for payment verification from the plugin
+  if (path === '/verify-payment' && request.method === 'POST') {
     try {
-      const claimData = await request.json();
+      const { paymentCode } = await request.json();
+      console.log(`[Worker Debug] /verify-payment received paymentCode: ${paymentCode}`);
 
-      // Fetch current land data
-      const currentDataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'Authorization': `token ${GITHUB_TOKEN}`,
@@ -142,35 +170,99 @@ async function handleRequest(request) {
         }
       });
 
-      let currentContent = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 }; // Updated default
-      let fileSha;
-
-      if (currentDataResponse.ok) {
-        const currentFileData = await currentDataResponse.json();
-        fileSha = currentFileData.sha;
-        currentContent = JSON.parse(atob(currentFileData.content));
-      } else if (currentDataResponse.status !== 404) {
-        const errorText = await currentDataResponse.text();
-        throw new Error(`GitHub API Error (GET current data for claim): ${currentDataResponse.status} ${currentDataResponse.statusText} - ${errorText}`);
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
       }
 
-      // Add new claim to lands array
-      currentContent.lands.push({
-        owner: claimData.playerName,
-        coords: claimData.coords,
-        blocks: 0, // Will be calculated by web interface later
-        cost: 0, // Will be calculated by web interface later
-        gap: 0, // Will be determined by web interface later
-        landType: 'Player', // Default to player land for in-game claims
-        paymentCode: null, // No payment code for in-game claims initially
-        purchaseTime: new Date().getTime(),
-        paid: true // In-game claims are considered paid immediately
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      const { users, lands, govConfig, governmentBalance } = currentContent;
+      console.log(`[Worker Debug] /verify-payment fetched lands: ${JSON.stringify(lands)}`);
+
+      let land = null;
+      for (const l of lands) {
+        console.log(`[Worker Debug] /verify-payment - Checking land: paymentCode=${l.paymentCode}, paid=${l.paid}, status=${l.status}, expirationTime=${l.expirationTime}`);
+        if (l.paymentCode === paymentCode) {
+          if (l.status === undefined) {
+            console.warn(`[Worker Warning] /verify-payment - Land with paymentCode ${l.paymentCode} is missing 'status' field. Assuming 'pending'.`);
+            l.status = 'pending'; // Temporarily assume pending for older entries
+          }
+          if (!l.paid && l.status === 'pending') {
+            land = l;
+            break;
+          }
+        }
+      }
+      console.log(`[Worker Debug] /verify-payment land.find() result: ${JSON.stringify(land)}`);
+
+      if (!land) {
+        console.log(`[Worker Debug] /verify-payment - Land not found or not pending/unpaid for paymentCode: ${paymentCode}`);
+        return new Response(JSON.stringify({ success: false, message: 'Invalid, expired, or already paid payment code.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      console.log(`[Worker Debug] /verify-payment - Found land for paymentCode: ${paymentCode}. Details: paid=${land.paid}, status=${land.status}, expirationTime=${land.expirationTime}`);
+      console.log(`[Worker Debug] /verify-payment - Current time: ${new Date().getTime()}`);
+
+      if (new Date().getTime() > land.expirationTime) {
+        console.log(`[Worker Debug] /verify-payment - Payment code expired.`);
+        return new Response(JSON.stringify({ success: false, message: 'Payment code has expired.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      // Return the land object for the plugin to use
+      console.log(`[Worker Debug] /verify-payment - Payment code valid.`);
+      return new Response(JSON.stringify({ success: true, message: 'Payment code valid.', land: land }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
 
-      const updatedContentString = JSON.stringify(currentContent, null, 2);
+    } catch (e) {
+      console.error(`[Worker Error] /verify-payment: ${e.message}`, e.stack);
+      return handleError(e);
+    }
+  }
 
-      const updateFileUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
-      const updateResponse = await fetch(updateFileUrl, {
+  // POST route for cancelling a payment
+  if (path === '/cancel-payment' && request.method === 'POST') {
+    try {
+      const { paymentCode } = await request.json();
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      const { users, lands, govConfig, governmentBalance } = currentContent;
+
+      const landIndex = lands.findIndex(l => l.paymentCode === paymentCode && !l.paid);
+      if (landIndex === -1) {
+        return new Response(JSON.stringify({ success: false, message: 'Invalid or already used payment code.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      lands.splice(landIndex, 1); // Remove the land reservation
+
+      const updatedContent = { users, lands, govConfig, governmentBalance };
+      const updatedContentString = JSON.stringify(updatedContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
         method: 'PUT',
         headers: {
           'Accept': 'application/vnd.github.v3+json',
@@ -179,18 +271,610 @@ async function handleRequest(request) {
           'User-Agent': 'Cloudflare-Worker'
         },
         body: JSON.stringify({
-          message: 'Add land claim from plugin',
-          content: btoa(unescape(encodeURIComponent(updatedContentString))),
+          message: `Payment cancellation for code ${paymentCode}`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update land data after cancellation.');
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Payment cancelled.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for land reservation from the web frontend
+  if (path === '/reserve-land-web' && request.method === 'POST') {
+    try {
+      const { owner, coords, blocks, cost, baseCost, tax, gst, gap, landType } = await request.json();
+
+      const paymentCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const purchaseTime = new Date().getTime();
+      const expirationTime = purchaseTime + (10 * 60 * 1000); // Increased to 10 minutes
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      let currentContent = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 };
+      let fileSha;
+
+      if (dataResponse.ok) {
+        const fileData = await dataResponse.json();
+        fileSha = fileData.sha;
+        currentContent = JSON.parse(atob(fileData.content));
+      } else if (dataResponse.status !== 404) {
+        const errorText = await dataResponse.text();
+        throw new Error(`GitHub API Error (GET for reserve-land-web): ${dataResponse.status} ${dataResponse.statusText} - ${errorText}`);
+      }
+
+      // Check for overlapping claims (using the existing checkOverlap function)
+      for (const existingLand of currentContent.lands) {
+        if (checkOverlap(coords, existingLand.coords)) {
+          return new Response(JSON.stringify({ success: false, message: 'Land overlaps with an existing claim.' }), {
+            status: 409,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        }
+      }
+
+      // Add new land reservation
+      currentContent.lands.push({
+        owner: owner,
+        coords: coords,
+        blocks: blocks,
+        cost: cost,
+        baseCost: baseCost,
+        tax: tax,
+        gst: gst,
+        gap: gap,
+        landType: landType,
+        paymentCode: paymentCode,
+        purchaseTime: purchaseTime,
+        expirationTime: expirationTime,
+        paid: false,
+        status: 'pending' // Ensure status is explicitly set
+      });
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Reserve land for ${owner} via web`,
+          content: btoa(updatedContentString),
           sha: fileSha
         })
       });
 
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text();
-        throw new Error(`GitHub API Error (PUT claim): ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`);
+        throw new Error(`GitHub API Error (PUT for reserve-land-web): ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`);
       }
 
-      return new Response(JSON.stringify({ message: 'Land claim received and saved!' }), {
+      return new Response(JSON.stringify({ success: true, paymentCode, expirationTime, cost }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for land reservation from the plugin
+  if (path === '/reserve-land' && request.method === 'POST') {
+    try {
+      const { playerName, coords, gap, landId } = await request.json();
+
+      // Calculate blocks and costs (same logic as web interface)
+      const c1 = coords[0];
+      const c2 = coords[1];
+
+      const numericC1 = { x: parseFloat(c1.x), y: parseFloat(c1.y), z: parseFloat(c1.z) };
+      const numericC2 = { x: parseFloat(c2.x), y: parseFloat(c2.y), z: parseFloat(c2.z) };
+
+      const blockWidth = Math.abs(numericC1.x - numericC2.x) + 1;
+      const blockDepth = Math.abs(numericC1.z - numericC2.z) + 1;
+      const totalBlocks = blockWidth * blockDepth;
+
+      const baseCost = totalBlocks * 10;
+      const tax = baseCost * 0.10;
+      const gst = baseCost * 0.03;
+      const totalCost = baseCost + tax + gst;
+
+      const paymentCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      let currentContent = { users: [], lands: [], govConfig: { gap: 10, landType: 'Government' }, governmentBalance: 0 };
+      let fileSha;
+
+      if (dataResponse.ok) {
+        const fileData = await dataResponse.json();
+        fileSha = fileData.sha;
+        currentContent = JSON.parse(atob(fileData.content));
+      } else if (dataResponse.status !== 404) {
+        const errorText = await dataResponse.text();
+        throw new Error(`GitHub API Error (GET for reserve-land): ${dataResponse.status} ${dataResponse.statusText} - ${errorText}`);
+      }
+
+      // Check for overlapping claims
+      for (const existingLand of currentContent.lands) {
+        if (checkOverlap(coords, existingLand.coords)) {
+          return new Response(JSON.stringify({ success: false, message: 'Land overlaps with an existing claim.' }), {
+            status: 409,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          });
+        }
+      }
+
+      // Add new land reservation
+      currentContent.lands.push({
+        id: landId,
+        owner: playerName,
+        coords: coords,
+        blocks: totalBlocks,
+        cost: totalCost,
+        baseCost: baseCost,
+        tax: tax,
+        gst: gst,
+        gap: gap, // Use the destructured gap
+        landType: 'Player',
+        purchaseTime: new Date().getTime(),
+        expirationTime: new Date().getTime() + (5 * 60 * 1000), // 5 minutes from now
+        paid: false,
+        status: 'pending' // Ensure status is explicitly set
+      });
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Reserve land for ${playerName}`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text();
+        throw new Error(`GitHub API Error (PUT for reserve-land): ${updateResponse.status} ${updateResponse.statusText} - ${errorText}`);
+      }
+
+      return new Response(JSON.stringify({ success: true, landId, cost: totalCost, blocks: totalBlocks }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // GET route for checking payment status from the plugin
+  if (path === '/check-payment-status' && request.method === 'GET') {
+    try {
+      const paymentCode = url.searchParams.get('paymentCode');
+      if (!paymentCode) {
+        return new Response(JSON.stringify({ success: false, message: 'Payment code is required.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      const { lands } = currentContent;
+
+      const land = lands.find(l => l.paymentCode === paymentCode);
+
+      if (!land) {
+        return new Response(JSON.stringify({ success: false, message: 'Payment code not found.' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      if (land.paid) {
+        return new Response(JSON.stringify({ success: true, status: 'paid', message: 'Payment already completed.' }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      if (new Date().getTime() > land.expirationTime) {
+        return new Response(JSON.stringify({ success: true, status: 'expired', message: 'Payment code has expired.' }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, status: 'pending', message: 'Payment is pending.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for notifying insufficient balance from the plugin
+  if (path === '/notify-insufficient-balance' && request.method === 'POST') {
+    try {
+      const { paymentCode } = await request.json();
+
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      let { users, lands, govConfig, governmentBalance } = currentContent;
+
+      let landIndex = -1;
+      for (let i = 0; i < lands.length; i++) {
+        const l = lands[i];
+        if (l.paymentCode === paymentCode) {
+          if (l.status === undefined) {
+            console.warn(`[Worker Warning] /notify-insufficient-balance - Land with paymentCode ${l.paymentCode} is missing 'status' field. Assuming 'pending'.`);
+            l.status = 'pending'; // Temporarily assume pending for older entries
+          }
+          if (!l.paid && l.status === 'pending') {
+            landIndex = i;
+            break;
+          }
+        }
+      }
+      if (landIndex === -1) {
+        return new Response(JSON.stringify({ success: false, message: 'Invalid or already processed payment code.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const land = lands[landIndex];
+      // Update the land reservation status to failed_insufficient_balance
+      land.status = 'failed_insufficient_balance';
+      land.remainingTime = new Date().getTime() - land.purchaseTime; // Store remaining time
+
+      const updatedContent = { users, lands, govConfig, governmentBalance };
+      const updatedContentString = JSON.stringify(updatedContent, null, 2);
+
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Payment failed for code ${paymentCode}. Status updated.`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update land data after insufficient balance notification.');
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Land reservation status updated to insufficient balance.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for confirming payment from the plugin
+  if (path === '/confirm-payment' && request.method === 'POST') {
+    try {
+      const { paymentCode } = await request.json();
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      let { users, lands, govConfig, governmentBalance } = currentContent;
+
+      let landIndex = -1;
+      for (let i = 0; i < lands.length; i++) {
+        const l = lands[i];
+        if (l.paymentCode === paymentCode) {
+          if (l.status === undefined) {
+            console.warn(`[Worker Warning] /confirm-payment - Land with paymentCode ${l.paymentCode} is missing 'status' field. Assuming 'pending'.`);
+            l.status = 'pending'; // Temporarily assume pending for older entries
+          }
+          if (!l.paid && l.status === 'pending') {
+            landIndex = i;
+            break;
+          }
+        }
+      }
+      console.log(`[Worker Debug] /confirm-payment - Attempting to confirm paymentCode: ${paymentCode}. Found index: ${landIndex}`);
+      if (landIndex === -1) {
+        console.log(`[Worker Debug] /confirm-payment - Land not found, already paid, or not pending for paymentCode: ${paymentCode}`);
+        return new Response(JSON.stringify({ success: false, message: 'Invalid, expired, or already paid payment code.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const land = lands[landIndex];
+      console.log(`[Worker Debug] /confirm-payment - Confirming land for owner: ${land.owner}, paymentCode: ${paymentCode}. Current paid status: ${land.paid}`);
+      land.paid = true; // Mark as paid
+
+      // Add cost to government balance
+      const newGovernmentBalance = governmentBalance + land.cost;
+      currentContent.governmentBalance = newGovernmentBalance;
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Payment confirmed for ${land.owner}`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update land data after payment confirmation.');
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Payment confirmed.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for direct payment confirmation from the plugin
+  if (path === '/confirm-direct-payment' && request.method === 'POST') {
+    try {
+      const { landId, playerName, cost } = await request.json();
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      let { users, lands, govConfig, governmentBalance } = currentContent;
+
+      const landIndex = lands.findIndex(l => l.id === landId && !l.paid && l.status === 'pending'); // Assuming 'id' is the unique identifier
+      if (landIndex === -1) {
+        return new Response(JSON.stringify({ success: false, message: 'Land not found or already paid.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const land = lands[landIndex];
+      // Optional: Verify playerName and cost if needed for extra security
+      // if (land.owner !== playerName || land.cost !== cost) {
+      //   return new Response(JSON.stringify({ success: false, message: 'Mismatch in land details.' }), {
+      //     status: 400,
+      //     headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      //   });
+      // }
+
+      land.paid = true; // Mark as paid
+      land.owner = playerName; // Ensure owner is set correctly
+
+      // Add cost to government balance
+      const newGovernmentBalance = governmentBalance + land.cost;
+      currentContent.governmentBalance = newGovernmentBalance;
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Direct payment confirmed for ${playerName} for land ${landId}`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update land data after direct payment confirmation.');
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Direct payment confirmed.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // POST route for resuming payment timer
+  if (path === '/resume-payment' && request.method === 'POST') {
+    try {
+      const { paymentCode, remainingTime } = await request.json();
+
+      // Fetch current data
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      let { users, lands, govConfig, governmentBalance } = currentContent;
+
+      const landIndex = lands.findIndex(l => l.paymentCode === paymentCode && (l.status === 'failed_insufficient_balance' || l.status === 'pending'));
+      if (landIndex === -1) {
+        return new Response(JSON.stringify({ success: false, message: 'Payment code not found.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const land = lands[landIndex];
+      land.expirationTime = new Date().getTime() + remainingTime; // Resume timer
+      land.status = 'pending'; // Set status back to pending
+
+      const updatedContentString = JSON.stringify(currentContent, null, 2);
+
+      // Update the file in GitHub
+      const updateResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Payment timer resumed for code ${paymentCode}`,
+          content: btoa(updatedContentString),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update land data after resuming timer.');
+      }
+
+      return new Response(JSON.stringify({ success: true, message: 'Payment timer resumed.' }), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+
+    } catch (e) {
+      return handleError(e);
+    }
+  }
+
+  // GET route for fetching pending payments for a player
+  if (path === '/get-pending-payments' && request.method === 'GET') {
+    try {
+      const playerName = url.searchParams.get('playerName');
+      if (!playerName) {
+        return new Response(JSON.stringify({ success: false, message: 'Player name is required.' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      const dataResponse = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'User-Agent': 'Cloudflare-Worker'
+        }
+      });
+
+      if (!dataResponse.ok) {
+        throw new Error('Could not fetch land data.');
+      }
+
+      const fileData = await dataResponse.json();
+      const currentContent = JSON.parse(atob(fileData.content));
+      const { lands } = currentContent;
+
+      const pendingPayments = lands.filter(l => l.owner === playerName && !l.paid);
+
+      return new Response(JSON.stringify({ success: true, pendingPayments: pendingPayments }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
 
