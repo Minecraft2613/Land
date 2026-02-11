@@ -39,46 +39,13 @@
       "minecraftName": "ansh",
       "minecraftEdition": "Bedrock",
       "wallet": 1000
-    },
-    {
-      "minecraftName": "Ansh",
-      "minecraftEdition": "Java",
-      "wallet": 1000
     }
   ],
   "lands": [
-    {
-      "owner": "Ansh",
-      "coords": [
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        },
-        {
-          "x": 1,
-          "y": 1,
-          "z": 1
-        }
-      ],
-      "blocks": 1,
-      "cost": 11.3,
-      "baseCost": 10,
-      "tax": 1,
-      "gst": 0.3,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "F1GP2K",
-      "purchaseTime": 1770820331677,
-      "expirationTime": 1770820931256,
-      "paid": true,
-      "status": "pending",
-      "remainingTime": 9323
-    }
   ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1023802.6000000001
+  "governmentBalance": 1023791.3
 }
