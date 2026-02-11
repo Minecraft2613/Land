@@ -39,10 +39,13 @@
       "minecraftName": "ansh",
       "minecraftEdition": "Bedrock",
       "wallet": 1000
+    },
+    {
+      "minecraftName": "Ansh",
+      "minecraftEdition": "Java"
     }
   ],
-  "lands": [
-  ],
+  "lands": [],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
