@@ -156,39 +156,6 @@
         let paymentSuccessHandled = false;
         let hasPendingPayment = false; // New global state
 
-        
-        // DOM elements
-        const views = document.querySelectorAll('.view-section');
-        const loginForm = document.getElementById('login-form');
-        const logoutButton = document.getElementById('logout-button');
-        const dashboardTitle = document.getElementById('dashboard-title');
-        const userLandsList = document.getElementById('user-lands-list');
-        const buyLandButton = document.getElementById('buy-land-button');
-        const govPanelButton = document.getElementById('gov-panel-button');
-        const backFromBuyButton = document.getElementById('back-from-buy-button');
-        const backFromGovButton = document.getElementById('back-from-gov-button');
-        const buyLandForm = document.getElementById('buy-land-form');
-        const govSettingsForm = document.getElementById('gov-settings-form');
-        const registerGovLandForm = document.getElementById('register-gov-land-form');
-        const ownerButtonsContainer = document.getElementById('owner-buttons');
-        const selectedPlayerPlotsContainer = document.getElementById('selected-player-plots');
-        const buyLandSubmitButton = buyLandForm.querySelector('button[type="submit"]');
-        const registerGovLandSubmitButton = document.getElementById('register-gov-land-button');
-        
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingMessage = document.getElementById('loading-message');
-        const paymentStatusOverlay = document.getElementById('payment-status-overlay');
-        const paymentStatusIcon = document.getElementById('payment-status-icon');
-        const paymentStatusMessage = document.getElementById('payment-status-message');
-        const paymentStatusCloseButton = document.getElementById('payment-status-close');
-
-        // Message displays
-        const loginMessages = document.getElementById('messages');
-        const dashboardMessages = document.getElementById('dashboard-messages');
-        const buyLandMessages = document.getElementById('buy-land-messages');
-        const govPanelMessages = document.getElementById('gov-panel-messages');
-
-        
         function showPaymentSuccess() {
             const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'); // A more distinct success sound
             audio.play();
@@ -197,11 +164,6 @@
 
         paymentStatusCloseButton.addEventListener('click', () => {
             paymentStatusOverlay.style.display = 'none';
-            paymentStatusOverlay.innerHTML = `
-                <div id="payment-status-icon"></div>
-                <p id="payment-status-message"></p>
-                <button id="payment-status-close" class="button">Close</button>
-            `;
             if (currentUser) { // Only render dashboard if a user is logged in
                 renderDashboard();
             } else {
