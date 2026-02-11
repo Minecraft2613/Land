@@ -70,9 +70,9 @@
       "landType": "Player",
       "paymentCode": "F1GP2K",
       "purchaseTime": 1770820331677,
-      "expirationTime": 1770820931677,
+      "expirationTime": 1770820931256,
       "paid": false,
-      "status": "failed_insufficient_balance",
+      "status": "pending",
       "remainingTime": 9323
     }
   ],
