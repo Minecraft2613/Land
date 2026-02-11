@@ -162,46 +162,31 @@
             showPaymentStatus(true, 'Payment Successful!');
         }
 
-        paymentStatusCloseButton.addEventListener('click', () => {
-            paymentStatusOverlay.style.display = 'none';
-            if (currentUser) { // Only render dashboard if a user is logged in
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                await loadData();
                 renderDashboard();
             } else {
-                setView('login-view'); // Go back to login if no user
+                setView('login-view');
+            }
+            
+            // Moved DOM element lookups and event listener attachments inside DOMContentLoaded
+            const paymentStatusCloseButton = document.getElementById('payment-status-close');
+            if (paymentStatusCloseButton) {
+                paymentStatusCloseButton.addEventListener('click', () => {
+                    paymentStatusOverlay.style.display = 'none';
+                    if (currentUser) { // Only render dashboard if a user is logged in
+                        renderDashboard();
+                    } else {
+                        setView('login-view'); // Go back to login if no user
+                    }
+                });
+            } else {
+                console.error("paymentStatusCloseButton element not found!");
             }
         });
-
-        // --- Data Persistence and Loading (Updated to use fetch API) ---
-        async function loadData() {
-            try {
-                const response = await fetch(`${API_URL}/data`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch data from API. Status: ${response.status}`);
-                }
-                const data = await response.json();
-                users = data.users || [];
-                lands = data.lands || [];
-                govConfig = data.govConfig || { gap: 10, landType: 'Government' };
-                governmentBalance = data.governmentBalance || 0;
-
-                // Check for pending land claims for the current user
-                hasPendingPayment = false; // Reset flag
-                if (currentUser) {
-                    const pendingLand = lands.find(land =>
-                        land.owner === currentUser.minecraftName &&
-                        !land.paid &&
-                        land.paymentCode &&
-                        new Date().getTime() < land.expirationTime // Only consider not-expired pending payments
-                    );
-
-                    if (pendingLand) {
-                        hasPendingPayment = true; // Set flag if there's an active pending payment
-                    }
-                }
-            } catch (e) {
-                showMessage(dashboardMessages, 'Failed to load data from the server.', 'error');
-            }
-        }
 
         async function saveData() {
             try {
