@@ -67,6 +67,8 @@
             </header>
             <div class="form-container">
                 <form id="buy-land-form">
+                    <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem;">Enter coordinates for
+                        two opposite corners (X, Z). Y is automatically set to 1.</p>
                     <div class="form-grid">
                         <!-- Coordinates will be generated here -->
                     </div>
@@ -182,11 +184,10 @@
         const PLAYER_PLOT_GAP = 7;
         const API_URL = 'https://land.1987sakshamsingh.workers.dev';
         const WORLD_SEED = 67480912992;
-        const ISO_ANGLE = Math.PI / 6; // 30 degrees
 
         // DOM Elements
         const loginForm = document.getElementById('login-form');
-        const loginMessages = document.getElementById('messages'); // Fixed: was looking for 'messages' inside form maybe? No, global ID.
+        const loginMessages = document.getElementById('messages');
         const dashboardTitle = document.getElementById('dashboard-title');
         const logoutButton = document.getElementById('logout-button');
         const buyLandButton = document.getElementById('buy-land-button');
@@ -260,19 +261,39 @@
         }
 
         let terrainNoise = null;
+        let biomeNoise = null;
 
-        function getNoise(x, y) {
+        function initNoise() {
             if (!terrainNoise) {
                 const rng = mulberry32(WORLD_SEED);
                 terrainNoise = new ClassicalNoise(rng);
+                const rng2 = mulberry32(WORLD_SEED + 12345);
+                biomeNoise = new ClassicalNoise(rng2);
             }
-            // Simple fractal noise
-            let val = 0;
-            val += terrainNoise.noise(x * 0.02, y * 0.02, 0) * 1.0;
-            val += terrainNoise.noise(x * 0.04, y * 0.04, 0) * 0.5;
-            val += terrainNoise.noise(x * 0.08, y * 0.08, 0) * 0.25;
-            // Normalize roughly -1.75 to 1.75 -> 0 to 1
-            return (val + 1.75) / 3.5;
+        }
+
+        // Multi-octave FBM for detail
+        function fbm(x, z, octaves) {
+            let total = 0;
+            let amp = 1;
+            let freq = 0.002;
+            let max = 0;
+            for (let i = 0; i < octaves; i++) {
+                total += terrainNoise.noise(x * freq, 0, z * freq) * amp;
+                max += amp;
+                amp *= 0.5;
+                freq *= 2;
+            }
+            return (total / max) + 0.5;
+        }
+
+        function getNoise(x, z) {
+            initNoise();
+            // Continentalness
+            const height = fbm(x, z, 4);
+            // Temperature (using simpler noise for speed)
+            const temp = biomeNoise.noise(x * 0.001, 0, z * 0.001) + 0.5;
+            return { height, temp };
         }
 
         function renderTerrainMap(canvasId, land) {
@@ -280,161 +301,139 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
-            // Canvas Sizing
+            initNoise();
+
             const width = canvas.offsetWidth || 300;
-            const height = 300; // Taller for better map view
+            const height = 300;
             canvas.width = width;
             canvas.height = height;
 
-            // Map Center (Layout center of the plot)
+            // Map Center
             const c1 = land.coords[0];
             const c2 = land.coords[1];
-            const plotCenterX = (c1.x + c2.x) / 2;
-            const plotCenterZ = (c1.z + c2.z) / 2;
+            const pMinX = Math.min(c1.x, c2.x);
+            const pMaxX = Math.max(c1.x, c2.x);
+            const pMinZ = Math.min(c1.z, c2.z);
+            const pMaxZ = Math.max(c1.z, c2.z);
 
-            // Viewport: 1024x1024 blocks centered on plot
-            // If plot is huge, ensure we zoom out enough to see it all + padding
-            const plotWidth = Math.abs(c1.x - c2.x);
-            const plotDepth = Math.abs(c1.z - c2.z);
-            const requiredSize = Math.max(plotWidth, plotDepth) * 1.5; // Ensure plot fits
-            const viewRadius = Math.max(512, requiredSize / 2); // Default 512 radius (1024 width), or larger
+            const plotW = pMaxX - pMinX;
+            const plotD = pMaxZ - pMinZ;
+            const plotCenterX = pMinX + (plotW / 2);
+            const plotCenterZ = pMinZ + (plotD / 2);
+
+            // Refined Zoom Logic:
+            // "show 100 by 100 for 10 by 10 okay" -> Padding = 45 blocks each side of 10x10.
+            const maxDim = Math.max(plotW, plotD);
+            const padding = Math.max(50, maxDim * 0.5);
+            const viewRadius = Math.max(50, (maxDim / 2) + padding);
 
             const minX = Math.floor(plotCenterX - viewRadius);
             const minZ = Math.floor(plotCenterZ - viewRadius);
             const mapW = Math.floor(viewRadius * 2);
             const mapH = Math.floor(viewRadius * 2);
 
-            // 1. Terrain Rendering (Pixel Manipulation for Performance)
-            // 1024x1024 is too heavy for fillRect. We use ImageData.
+            // Terrain Render
             const imageData = ctx.createImageData(width, height);
             const data = imageData.data;
-
-            // Scaling factors
             const scaleX = mapW / width;
             const scaleZ = mapH / height;
 
             for (let py = 0; py < height; py++) {
                 for (let px = 0; px < width; px++) {
-                    // Map pixel (px, py) to world coordinate (wx, wz)
                     const wx = minX + (px * scaleX);
                     const wz = minZ + (py * scaleZ);
 
-                    const nVal = getNoise(wx, wz);
-                    const heightVal = Math.floor(nVal * 20);
-
-                    // Simple Hillshading: Compare height with neighbor (top-left vs current)
-                    // We cheat by re-sampling noise slightly offset
-                    const nValPrev = getNoise(wx - 1, wz - 1);
-                    const heightValPrev = Math.floor(nValPrev * 20);
-                    const slope = heightVal - heightValPrev;
+                    const { height: h, temp: t } = getNoise(wx, wz);
 
                     let r, g, b;
 
-                    // Biome Colors (Chunkbase-ish)
-                    if (nVal < 0.35) { // Deep Ocean
-                        r = 63; g = 118; b = 228;
-                    } else if (nVal < 0.40) { // Beach/Sand
-                        r = 240; g = 230; b = 140;
-                    } else if (nVal < 0.70) { // Plains/Forest
-                        // Varies by temp (noise wiggle) for variety
-                        const temp = nVal;
-                        r = 34; g = 139 + (temp * 20); b = 34;
-                    } else if (nVal < 0.85) { // Mountains/Stone
-                        r = 112; g = 128; b = 144;
-                    } else { // Snow
-                        r = 255; g = 250; b = 250;
+                    // Chunkbase Colors
+                    if (h < 0.44) { r = 60; g = 100; b = 190; } // Deep Ocean
+                    else if (h < 0.48) { r = 70; g = 120; b = 220; } // Ocean
+                    else if (h < 0.50) { r = 240; g = 230; b = 150; } // Beach
+                    else {
+                        if (h > 0.85) { // Peak
+                            if (t < 0.3) { r = 255; g = 255; b = 255; } // Snow
+                            else { r = 140; g = 140; b = 140; } // Stone
+                        } else {
+                            if (t < 0.3) { r = 220; g = 240; b = 245; } // Tundra
+                            else if (t < 0.5) { r = 50; g = 120; b = 60; } // Taiga 
+                            else if (t > 0.8) { r = 230; g = 190; b = 100; } // Desert
+                            else if (t > 0.7) { r = 80; g = 160; b = 40; } // Jungle
+                            else { r = 90; g = 180; b = 70; } // Plains
+                        }
                     }
 
-                    // Apply shading
+                    // Hillshading
+                    const slope = (h) - (terrainNoise.noise((wx - 2) * 0.002, 0, (wz - 2) * 0.002) * 1 + terrainNoise.noise((wx - 2) * 0.004, 0, (wz - 2) * 0.004) * 0.5 + 0.5) / 1.5;
                     let shade = 0;
-                    if (slope > 0) shade = 20; // Highlight
-                    else if (slope < 0) shade = -20; // Shadow
+                    if (slope > 0.001) shade = 10;
+                    else if (slope < -0.001) shade = -10;
 
-                    // Additional Deep Water darkening
-                    if (nVal < 0.35) shade -= 10;
-
-                    // Set pixel
                     const idx = (py * width + px) * 4;
-                    data[idx] = Math.max(0, Math.min(255, r + shade));     // R
-                    data[idx + 1] = Math.max(0, Math.min(255, g + shade));   // G
-                    data[idx + 2] = Math.max(0, Math.min(255, b + shade));   // B
-                    data[idx + 3] = 255; // Alpha
+                    data[idx] = Math.max(0, Math.min(255, r + shade));
+                    data[idx + 1] = Math.max(0, Math.min(255, g + shade));
+                    data[idx + 2] = Math.max(0, Math.min(255, b + shade));
+                    data[idx + 3] = 255;
                 }
             }
-
             ctx.putImageData(imageData, 0, 0);
 
-            // 2. Draw Plot Boundaries
-            // We iterate through ALL lands to show neighbors
-            // Coordinate mapping function
-            const worldToScreen = (wx, wz) => {
-                return {
-                    x: (wx - minX) / scaleX,
-                    y: (wz - minZ) / scaleZ
-                };
-            };
+            // Overlays
+            const worldToScreen = (wx, wz) => ({
+                x: (wx - minX) / scaleX,
+                y: (wz - minZ) / scaleZ
+            });
 
             lands.forEach(l => {
-                // Check if land is visible in viewport
                 const lMinX = Math.min(l.coords[0].x, l.coords[1].x);
                 const lMaxX = Math.max(l.coords[0].x, l.coords[1].x);
                 const lMinZ = Math.min(l.coords[0].z, l.coords[1].z);
                 const lMaxZ = Math.max(l.coords[0].z, l.coords[1].z);
 
-                // Simple AABB intersection test with viewport
-                if (lMaxX < minX || lMinX > minX + mapW || lMaxZ < minZ || lMinZ > minZ + mapH) {
-                    return; // Skip if off-screen
-                }
+                if (lMaxX < minX || lMinX > minX + mapW || lMaxZ < minZ || lMinZ > minZ + mapH) return;
 
-                // Determine Color
                 const isMyLand = (l.owner === currentUser.minecraftName);
-                const isTargetLand = (l.id === land.id || l.paymentCode === land.paymentCode);
-
-                // User requirement: Green for owned, Red for others
-                let color = isMyLand ? '#22c55e' : '#ef4444'; // Green : Red
-                let lineWidth = isMyLand ? 2 : 1;
-
-                // Specifically highlight the CURRENT card's plot even more?
-                // The user said "green to show our owned". 
-                // Let's stick to the rule: Green = Mine, Red = Others.
-
-                ctx.strokeStyle = color;
-                ctx.lineWidth = lineWidth;
-
-                // Add fill for better visibility
-                ctx.fillStyle = isMyLand ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.1)';
+                const color = isMyLand ? '#22c55e' : '#ef4444';
+                const fillColor = isMyLand ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.3)';
 
                 const p1 = worldToScreen(lMinX, lMinZ);
                 const p2 = worldToScreen(lMaxX, lMaxZ);
+                const rectW = Math.max(2, p2.x - p1.x);
+                const rectH = Math.max(2, p2.y - p1.y);
 
-                const w = p2.x - p1.x;
-                const h = p2.y - p1.y;
+                ctx.fillStyle = fillColor;
+                ctx.fillRect(p1.x, p1.y, rectW, rectH);
 
-                ctx.beginPath();
-                ctx.rect(p1.x, p1.y, w, h);
-                ctx.fill();
-                ctx.stroke();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = isMyLand ? 2 : 1;
+                ctx.strokeRect(p1.x, p1.y, rectW, rectH);
 
-                // Optional: Draw Owner Name if big enough
-                if (w > 20) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '10px sans-serif';
+                if (rectW > 40 && rectH > 15) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 11px Inter';
                     ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
                     ctx.shadowColor = 'black';
                     ctx.shadowBlur = 4;
-                    ctx.fillText(l.owner, p1.x + w / 2, p1.y + h / 2);
+                    const name = l.owner.length > 8 ? l.owner.substring(0, 6) + '..' : l.owner;
+                    ctx.fillText(name, p1.x + rectW / 2, p1.y + rectH / 2);
                     ctx.shadowBlur = 0;
                 }
             });
 
-            // Draw Scale Indicator (100 blocks)
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(10, height - 25, 100 / scaleX + 10, 20);
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(15, height - 15, 100 / scaleX, 2);
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('100 blocks', 15, height - 18);
+            // Scale Bar
+            const barWidthVal = Math.pow(10, Math.floor(Math.log10(mapW * 0.3)));
+            const barPixelWidth = barWidthVal / scaleX;
+            if (barPixelWidth > 15) {
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(10, height - 28, barPixelWidth + 10, 22);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(15, height - 12, barPixelWidth, 3);
+                ctx.font = '11px Inter';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${barWidthVal} blocks`, 15, height - 16);
+            }
         }
 
 
@@ -446,42 +445,55 @@
             const statusText = land.paid ? 'OWNED' : (isPending ? 'RESERVED' : 'EXPIRED');
             const canvasId = `map-${land.id || land.paymentCode}`;
 
-            // Coordinates string for display (minified)
             const c1 = land.coords[0];
             const c2 = land.coords[1];
 
-            let html = `
+            return `
                 <div class="land-card">
                     <canvas id="${canvasId}" class="land-map-canvas"></canvas>
                     
                     <div class="land-details">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
                             <h3>${land.landType} Plot</h3>
-                            <span class="detail-value ${statusClass}" style="font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(0,0,0,0.3);">${statusText}</span>
+                            <span class="detail-value ${statusClass}" style="padding: 0.2rem 0.6rem; border-radius: 6px; background: rgba(0,0,0,0.4); font-size:0.75rem; letter-spacing:0.05em;">${statusText}</span>
                         </div>
                         
-                        <p><span>Coords:</span> <span class="detail-value">[${c1.x},${c1.z}] to [${c2.x},${c2.z}]</span></p>
-                        <p><span>Blocks:</span> <span class="detail-value">${land.blocks.toLocaleString()}</span></p>
-                        ${land.cost > 0 ? `<p><span>Value:</span> <span class="detail-value">$${land.cost.toFixed(2)}</span></p>` : ''}
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                            <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:4px;">
+                                <span style="color:var(--text-muted); display:block; font-size:0.7rem;">X Range</span>
+                                <span class="detail-value">${Math.min(c1.x, c2.x)} ↔ ${Math.max(c1.x, c2.x)}</span>
+                            </div>
+                             <div style="background:rgba(255,255,255,0.05); padding:0.5rem; border-radius:4px;">
+                                <span style="color:var(--text-muted); display:block; font-size:0.7rem;">Z Range</span>
+                                <span class="detail-value">${Math.min(c1.z, c2.z)} ↔ ${Math.max(c1.z, c2.z)}</span>
+                            </div>
+                        </div>
+                        <p style="text-align:right; font-size:0.8rem; color:var(--text-muted);">Area: <span style="color:var(--text-main);">${land.blocks.toLocaleString()} m²</span></p>
                     </div>
 
                     ${isPending ? `
                         <div class="pending-payment-section" id="pending-section-${land.paymentCode}">
-                            <h4>Complete Purchase</h4>
-                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Type this in-game:</p>
-                            <code>/land payment ${land.paymentCode}</code>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
-                                <span id="timer-${land.paymentCode}" class="timer-display">--:--</span>
-                                <button class="button cancel-button" style="padding: 0.25rem 0.75rem; font-size: 0.75rem;" onclick="cancelPayment('${land.paymentCode}')">Cancel</button>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                <h4 style="margin:0;">Payment Required</h4>
+                                <span id="timer-${land.paymentCode}" class="timer-display" style="background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px;">--:--</span>
                             </div>
+                            
+                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                                <code style="flex-grow:1; text-align:center; padding:0.5rem; border:1px dashed var(--warning); background:rgba(245, 158, 11, 0.05); display:flex; align-items:center; justify-content:center;">/land payment ${land.paymentCode}</code>
+                                <button class="button copy-button" onclick="copyCommand('${land.paymentCode}', this)" style="background:var(--bg-card); border-color:var(--glass-border); min-width:80px;">
+                                    <svg xmlns="http://www.w3.org/2001/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            
+                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.5rem;" onclick="cancelPayment('${land.paymentCode}')">Cancel Reservation</button>
                         </div>
                     ` : ''}
                 </div>
             `;
-            return html;
         }
 
-        async function renderDashboard() {
+        function renderDashboard() {
             if (!currentUser) return;
             setView('dashboard-view');
 
@@ -568,6 +580,24 @@
 
         // --- Form Handling ---
 
+        function copyCommand(code, btn) {
+            const cmd = `/land payment ${code}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(cmd).then(() => {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<span style="color:#6ee7b7; font-weight:bold;">✓ Copied</span>`;
+                    btn.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.borderColor = '';
+                    }, 2000);
+                });
+            } else {
+                // Fallback
+                prompt("Copy this:", cmd);
+            }
+        }
+
         function renderBuyLand() {
             setView('buy-land-view');
             renderCoordinatesForm(buyLandForm, 2, 'player');
@@ -591,6 +621,30 @@
             } else {
                 card.style.display = 'none';
             }
+        }
+
+        // Helpers
+        function renderCoordinatesForm(el, count, type) {
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `<div class="form-group"><label>Point ${i}</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                 <input type="number" name="${type}-coord-x-${i}" placeholder="X" required class="coord-input">
+                 <!-- Y hidden -->
+                 <input type="hidden" name="${type}-coord-y-${i}" value="1">
+                 <input type="number" name="${type}-coord-z-${i}" placeholder="Z" required class="coord-input">
+                 </div></div>`;
+            }
+            el.querySelector('.form-grid').innerHTML = html;
+        }
+        function getFormCoordinates(el, count, prefix) {
+            const arr = [];
+            for (let i = 1; i <= count; i++) {
+                const x = el.querySelector(`[name="${prefix}-x-${i}"]`).value;
+                const y = el.querySelector(`[name="${prefix}-y-${i}"]`).value || 1;
+                const z = el.querySelector(`[name="${prefix}-z-${i}"]`).value;
+                arr.push({ x, y, z });
+            }
+            return arr;
         }
 
         // --- Standard Utils ---
@@ -699,27 +753,6 @@
         loadData();
 
         // Helpers I preserved from original code for math
-        function renderCoordinatesForm(el, count, type) {
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `<div class="form-group"><label>Point ${i}</label><div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
-                 <input type="number" name="${type}-coord-x-${i}" placeholder="X" required class="coord-input">
-                 <input type="number" name="${type}-coord-y-${i}" placeholder="Y" required class="coord-input">
-                 <input type="number" name="${type}-coord-z-${i}" placeholder="Z" required class="coord-input">
-                 </div></div>`;
-            }
-            el.querySelector('.form-grid').innerHTML = html;
-        }
-        function getFormCoordinates(el, count, prefix) {
-            const arr = [];
-            for (let i = 1; i <= count; i++) {
-                const x = el.querySelector(`[name="${prefix}-x-${i}"]`).value;
-                const y = el.querySelector(`[name="${prefix}-y-${i}"]`).value;
-                const z = el.querySelector(`[name="${prefix}-z-${i}"]`).value;
-                arr.push({ x, y, z });
-            }
-            return arr;
-        }
         const calculatePlotDetails = (coords) => {
             // simplified port of original logic to keep compatible
             if (coords.length < 2) return { isValid: false };
