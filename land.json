@@ -70,7 +70,7 @@
       "paymentCode": "5DD3E9",
       "purchaseTime": 1770827766975,
       "expirationTime": 1770828366975,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -78,5 +78,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1023791.3
+  "governmentBalance": 1024921.3
 }
