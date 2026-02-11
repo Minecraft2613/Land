@@ -46,7 +46,35 @@
       "wallet": 1000
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "Ansh",
+      "coords": [
+        {
+          "x": 1,
+          "y": 1,
+          "z": 1
+        },
+        {
+          "x": 10,
+          "y": 10,
+          "z": 10
+        }
+      ],
+      "blocks": 100,
+      "cost": 1130,
+      "baseCost": 1000,
+      "tax": 100,
+      "gst": 30,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "DRSNFW",
+      "purchaseTime": 1770826991258,
+      "expirationTime": 1770827591258,
+      "paid": false,
+      "status": "pending"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
