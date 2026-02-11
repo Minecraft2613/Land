@@ -299,21 +299,21 @@
             const plotD = maxZ - minZ + 1;
 
             // Add padding (context)
-            const pad = 10;
+            const pad = 8;
             const viewMinX = minX - pad;
             const viewMinZ = minZ - pad;
             const viewW = plotW + (pad * 2);
             const viewD = plotD + (pad * 2);
 
             // Calculate scale to fit
-            const tileSize = Math.min(width / (viewW + viewD) * 1.5, 12); // Dynamic tile size
+            const tileSize = Math.min(width / (viewW + viewD) * 1.6, 14);
 
             const centerX = width / 2;
-            const centerY = height / 4; // Start higher up
+            const centerY = height / 3.5;
 
             ctx.clearRect(0, 0, width, height);
 
-            // Render loop (Painter's algorithm: back to front)
+            // 1. Render Terrain (Back to Front)
             for (let z = 0; z < viewD; z++) {
                 for (let x = 0; x < viewW; x++) {
                     const wx = viewMinX + x;
@@ -321,69 +321,112 @@
 
                     const noiseVal = getNoise(wx, wz);
                     const isWater = noiseVal < 0.35;
-                    const terrainHeight = Math.floor(noiseVal * 10); // 0 to 10 blocks height
+                    const terrainHeight = Math.floor(noiseVal * 12);
 
-                    // Colors
-                    let topColor = '#3b82f6'; // Water
-                    let sideColor = '#1e40af';
+                    // Improved Colors (Vibrant/Seed Map Style)
+                    let topColor, sideColor;
 
-                    if (!isWater) {
-                        if (noiseVal < 0.4) { topColor = '#fcd34d'; sideColor = '#d97706'; } // Sand
-                        else if (noiseVal < 0.7) { topColor = '#10b981'; sideColor = '#059669'; } // Grass
-                        else if (noiseVal < 0.85) { topColor = '#64748b'; sideColor = '#475569'; } // Stone
-                        else { topColor = '#f8fafc'; sideColor = '#cbd5e1'; } // Snow
+                    if (isWater) {
+                        topColor = '#4fa4f3'; // Brighter Water
+                        sideColor = '#2b6cb0';
+                    } else if (noiseVal < 0.45) {
+                        topColor = '#e6c86e'; // Sand
+                        sideColor = '#b79532';
+                    } else if (noiseVal < 0.75) {
+                        topColor = '#4ade80'; // Vibrant Grass
+                        sideColor = '#16a34a';
+                    } else if (noiseVal < 0.9) {
+                        topColor = '#94a3b8'; // Stone
+                        sideColor = '#475569';
+                    } else {
+                        topColor = '#f1f5f9'; // Snow
+                        sideColor = '#cbd5e1';
                     }
 
                     // ISO projection
                     const isoX = (x - z) * tileSize * Math.cos(ISO_ANGLE) + centerX;
                     const isoY = (x + z) * tileSize * Math.sin(ISO_ANGLE) - (terrainHeight * 2) + centerY;
 
-                    // Draw Block
-                    // Top
-                    ctx.fillStyle = topColor;
-                    ctx.beginPath();
-                    ctx.moveTo(isoX, isoY);
-                    ctx.lineTo(isoX + tileSize, isoY + tileSize / 2); // approximate
-                    ctx.lineTo(isoX, isoY + tileSize);
-                    ctx.lineTo(isoX - tileSize, isoY + tileSize / 2);
-                    ctx.fill();
-
-                    // Side (Depth)
-                    if (!isWater || wz === viewD - 1) { // Don't draw sides for inner water
+                    // Draw Block Side (Depth)
+                    if (!isWater || wz === viewD - 1) {
                         ctx.fillStyle = sideColor;
                         ctx.beginPath();
                         ctx.moveTo(isoX - tileSize, isoY + tileSize / 2);
                         ctx.lineTo(isoX, isoY + tileSize);
-                        ctx.lineTo(isoX, isoY + tileSize + 4);
-                        ctx.lineTo(isoX + tileSize, isoY + tileSize + 4);
+                        ctx.lineTo(isoX, isoY + tileSize + (tileSize / 2)); // Taller sides for better definition
+                        ctx.lineTo(isoX + tileSize, isoY + tileSize + (tileSize / 2));
                         ctx.lineTo(isoX + tileSize, isoY + tileSize / 2);
-                        // approximate polygon
-                        ctx.lineTo(isoX, isoY + tileSize * 1.5); // bottom point
+                        ctx.lineTo(isoX, isoY + tileSize);
                         ctx.lineTo(isoX - tileSize, isoY + tileSize / 2);
                         ctx.fill();
                     }
 
-                    // Red Boundary Drawing
-                    // Check if this specific block is on the edge of the plot
-                    const inPlotX = wx >= minX && wx <= maxX;
-                    const inPlotZ = wz >= minZ && wz <= maxZ;
+                    // Draw Block Top
+                    ctx.fillStyle = topColor;
+                    ctx.beginPath();
+                    ctx.moveTo(isoX, isoY);
+                    ctx.lineTo(isoX + tileSize, isoY + tileSize / 2);
+                    ctx.lineTo(isoX, isoY + tileSize);
+                    ctx.lineTo(isoX - tileSize, isoY + tileSize / 2);
+                    ctx.fill();
 
-                    if (inPlotX && inPlotZ) {
-                        const isEdge = wx === minX || wx === maxX || wz === minZ || wz === maxZ;
-                        if (isEdge) {
-                            ctx.strokeStyle = '#ef4444'; // Red
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.moveTo(isoX, isoY);
-                            ctx.lineTo(isoX + tileSize, isoY + tileSize / 2);
-                            ctx.lineTo(isoX, isoY + tileSize);
-                            ctx.lineTo(isoX - tileSize, isoY + tileSize / 2);
-                            ctx.closePath();
-                            ctx.stroke();
-                        }
-                    }
+                    // Highlight top slightly for 3D effect
+                    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                    ctx.fill();
                 }
             }
+
+            // 2. Render Solid Red Boundary (Draped over terrain)
+            // We need to trace the perimeter.
+            // Perimeter path: (minX, minZ) -> (maxX, minZ) -> (maxX, maxZ) -> (minX, maxZ) -> (minX, minZ)
+
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+
+            const drawEdge = (x1, z1, x2, z2) => {
+                // Interpolate points between corners to follow terrain height
+                const dist = Math.max(Math.abs(x2 - x1), Math.abs(z2 - z1));
+                for (let i = 0; i <= dist; i++) {
+                    const t = i / dist;
+                    const wx = Math.round(x1 + (x2 - x1) * t);
+                    const wz = Math.round(z1 + (z2 - z1) * t);
+
+                    // Calculate height at this specific block
+                    const nVal = getNoise(wx, wz);
+                    const tH = Math.floor(nVal * 12);
+
+                    // Map to View local coords
+                    const lx = wx - viewMinX;
+                    const lz = wz - viewMinZ;
+
+                    const scrX = (lx - lz) * tileSize * Math.cos(ISO_ANGLE) + centerX;
+                    const scrY = (lx + lz) * tileSize * Math.sin(ISO_ANGLE) - (tH * 2) + centerY;
+
+                    // We want to draw on the *outer edge* of the block top.
+                    // But to keep it "solid" and simple, drawing through the center-top of the perimeter blocks is robust.
+                    // Let's offset y slightly up to ensure it sits ON TOP of the blocks
+                    if (i === 0 && x1 === minX && z1 === minZ) ctx.moveTo(scrX, scrY - tileSize / 2); // Start at top center
+                    else ctx.lineTo(scrX, scrY - tileSize / 2);
+                }
+            };
+
+            // Draw the 4 sides
+            // Offset coordinates to align with block centers
+            drawEdge(minX, minZ, maxX, minZ); // Top edge
+            drawEdge(maxX, minZ, maxX, maxZ); // Right edge
+            drawEdge(maxX, maxZ, minX, maxZ); // Bottom edge
+            drawEdge(minX, maxZ, minX, minZ); // Left edge
+
+            ctx.stroke();
+
+            // Add a glow effect to the boundary
+            ctx.shadowColor = '#ef4444';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0; // reset
         }
 
 
