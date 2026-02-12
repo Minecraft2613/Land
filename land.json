@@ -99,6 +99,33 @@
       "expirationTime": 1770829957840,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 40,
+          "y": 1,
+          "z": 40
+        },
+        {
+          "x": 35,
+          "y": 1,
+          "z": 35
+        }
+      ],
+      "blocks": 36,
+      "cost": 406.79999999999995,
+      "baseCost": 360,
+      "tax": 36,
+      "gst": 10.799999999999999,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "H9DHUU",
+      "purchaseTime": 1770891457570,
+      "expirationTime": 1770892057570,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
