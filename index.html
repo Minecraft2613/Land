@@ -226,7 +226,14 @@
                 if (!response.ok) throw new Error('API Error');
                 const data = await response.json();
                 users = data.users || [];
-                lands = data.lands || [];
+                
+                // FILTER: Remove lands that are unpaid AND expired
+                const now = new Date().getTime();
+                lands = (data.lands || []).filter(l => {
+                    if (l.paid) return true; // Keep paid land
+                    return now < l.expirationTime; // Keep unpaid land only if not expired
+                });
+
                 govConfig = data.govConfig || { gap: 10, landType: 'Government' };
                 governmentBalance = data.governmentBalance || 0;
             } catch (e) {
@@ -250,7 +257,6 @@
 
         // --- Terrain Map System ---
 
-        // Better Seeded PRNG that handles 64-bit seeds better
         function splitmix64(seed) {
             let s = BigInt(seed);
             return function () {
@@ -271,55 +277,47 @@
             if (!terrainNoise) {
                 const rng = splitmix64(WORLD_SEED);
                 terrainNoise = new ClassicalNoise(rng);
-                const rng2 = splitmix64(WORLD_SEED + 123456789);
+                const rng2 = splitmix64(WORLD_SEED + 987654321);
                 biomeNoise = new ClassicalNoise(rng2);
-                const rng3 = splitmix64(WORLD_SEED ^ 0xABCDEF);
+                const rng3 = splitmix64(WORLD_SEED ^ 0x1337BEEF);
                 weirdnessNoise = new ClassicalNoise(rng3);
             }
         }
 
-        // Refined FBM with lower frequency for world-scale accuracy
-        function fbm(x, z, octaves, frequency = 0.0005) {
+        function fbm(x, z, octaves, frequency = 0.01) {
             let total = 0;
             let amp = 1;
             let freq = frequency;
             let max = 0;
             for (let i = 0; i < octaves; i++) {
-                total += terrainNoise.noise(x * freq, 1.5, z * freq) * amp;
+                total += terrainNoise.noise(x * freq, 0.5, z * freq) * amp;
                 max += amp;
                 amp *= 0.5;
                 freq *= 2;
             }
-            return (total / max) + 0.5;
+            return total / max; 
         }
 
         function getNoise(x, z) {
             initNoise();
             
-            // 1. Continentalness (Huge scale: Land vs Deep Ocean)
-            const cont = fbm(x, z, 5, 0.0004); 
+            // Scaled for a 1.21+ world feel
+            const cont = fbm(x, z, 4, 0.005); 
+            const erosion = fbm(x + 2000, z + 2000, 3, 0.01);
+            const weird = weirdnessNoise.noise(x * 0.018, 0.5, z * 0.018); 
             
-            // 2. Erosion (Flat vs Rugged)
-            const erosion = fbm(x + 5000, z + 5000, 4, 0.001);
+            const temp = biomeNoise.noise(x * 0.006, 10, z * 0.006);
+            const humid = biomeNoise.noise(x * 0.006, 50, z * 0.006);
             
-            // 3. Weirdness (Used for Rivers and Varied Biomes)
-            const weird = weirdnessNoise.noise(x * 0.0012, 0, z * 0.0012) + 0.5;
-            
-            // 4. Biome Factors (Temp/Humidity)
-            const temp = biomeNoise.noise(x * 0.0008, 10, z * 0.0008) + 0.5;
-            const humid = biomeNoise.noise(x * 0.0008, 50, z * 0.0008) + 0.5;
-            
-            // River Detection: Rivers occur in "valleys" of weirdness
-            const isRiverVal = Math.abs(weird - 0.5) < 0.035 && cont > 0.45;
+            // River: weirdness close to center
+            const isRiverVal = Math.abs(weird) < 0.09 && cont > -0.15;
 
-            // Final Height Calculation
             let h = cont;
             if (isRiverVal) {
-                h -= 0.08; // Carve the river
-            } else if (h > 0.5) {
-                // Mountain influence based on erosion
-                const peak = Math.max(0, fbm(x, z, 3, 0.005) - 0.5) * 2;
-                h += peak * (1.0 - erosion) * 0.4;
+                h = -0.35; 
+            } else if (h > 0) {
+                const detail = fbm(x, z, 2, 0.03);
+                h += Math.max(0, detail) * (1.1 - erosion) * 0.5;
             }
 
             return { height: h, temp, humid, erosion, weird, isRiver: isRiverVal };
@@ -350,12 +348,11 @@
             const plotCenterX = pMinX + (plotW / 2);
             const plotCenterZ = pMinZ + (plotD / 2);
 
-            // Zoom logic: Smaller plots show more context
+            // ADAPTIVE ZOOM: Fill the canvas based on plot size
             const maxDim = Math.max(plotW, plotD);
-            let viewRadius = Math.max(40, maxDim * 1.6);
-            if (maxDim > 100) viewRadius = maxDim * 1.1;
+            let isoScale = width / (maxDim * 3.8); 
+            isoScale = Math.max(10, Math.min(24, isoScale)); // Better scale range
 
-            const isoScale = width / (viewRadius * 2.5);
             const cx = width / 2;
             const cy = height / 2;
 
@@ -364,11 +361,11 @@
                 const dz = z - plotCenterZ;
                 return {
                     x: cx + (dx - dz) * isoScale,
-                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.7)
+                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.8)
                 };
             };
 
-            const renderDist = Math.ceil(width / isoScale) + 4;
+            const renderDist = Math.ceil(width / isoScale) + 10;
             const rMinX = Math.floor(plotCenterX - renderDist);
             const rMaxX = Math.floor(plotCenterX + renderDist);
             const rMinZ = Math.floor(plotCenterZ - renderDist);
@@ -376,7 +373,7 @@
 
             ctx.clearRect(0, 0, width, height);
 
-            const seaLevel = 0.48;
+            const seaLevel = -0.15;
 
             for (let sum = rMinX + rMinZ; sum <= rMaxX + rMaxZ; sum++) {
                 for (let x = rMinX; x <= rMaxX; x++) {
@@ -385,46 +382,46 @@
 
                     const n = getNoise(x, z);
                     const isActuallyWater = n.height < seaLevel;
-                    const terrainY = (n.height - seaLevel) * 40;
+                    const terrainY = (n.height - seaLevel) * 45;
                     const visualY = isActuallyWater ? 0 : terrainY;
 
                     const s = toScreen(x, visualY, z);
                     if (s.x < -isoScale * 2 || s.x > width + isoScale * 2 || s.y < -isoScale * 2 || s.y > height + isoScale * 2) continue;
 
-                    // Biome Colors (Minecraft 1.21-ish)
+                    // Vivid Biome Palette (Chunkbase Style)
                     let r, g, b;
-                    if (n.height < 0.4) { [r, g, b] = [20, 50, 120]; } // Deep Ocean
+                    if (n.height < -0.45) { [r, g, b] = [20, 40, 100]; } // Deep Ocean
                     else if (isActuallyWater) { 
-                        if (n.isRiver) [r, g, b] = [60, 130, 200]; // River Blue
-                        else [r, g, b] = [40, 80, 180]; // Regular Ocean
+                        if (n.isRiver) [r, g, b] = [60, 120, 210]; // River
+                        else [r, g, b] = [45, 80, 180]; // Ocean
                     }
-                    else if (n.height < seaLevel + 0.015) { [r, g, b] = [220, 200, 140]; } // Beach/Sand
-                    else if (n.height > 0.85) { [r, g, b] = [255, 255, 255]; } // Snow Peaks
-                    else if (n.height > 0.75) { [r, g, b] = [130, 130, 140]; } // Stony Peaks
+                    else if (n.height < seaLevel + 0.03) { [r, g, b] = [240, 225, 165]; } // Beach
+                    else if (n.height > 0.65) { [r, g, b] = [255, 255, 255]; } // Snow
+                    else if (n.height > 0.45) { [r, g, b] = [130, 130, 140]; } // Stone
                     else {
-                        // Land biomes based on Temp/Humid
-                        if (n.temp > 0.8) {
-                            if (n.humid < 0.4) [r, g, b] = [210, 185, 100]; // Desert
-                            else [r, g, b] = [40, 100, 30]; // Jungle
-                        } else if (n.temp < 0.3) {
-                            [r, g, b] = [120, 150, 120]; // Tundra/Taiga
+                        // Land Biomes
+                        if (n.temp > 0.5) {
+                            if (n.humid < -0.2) [r, g, b] = [225, 195, 100]; // Desert
+                            else if (n.humid > 0.5) [r, g, b] = [40, 110, 30]; // Jungle
+                            else [r, g, b] = [105, 155, 65]; // Plains
+                        } else if (n.temp < -0.4) {
+                            [r, g, b] = [120, 160, 140]; // Taiga
                         } else {
-                            if (n.humid > 0.7) [r, g, b] = [30, 70, 40]; // Dark Forest
-                            else if (n.humid < 0.35) [r, g, b] = [140, 170, 70]; // Plains
-                            else [r, g, b] = [70, 140, 50]; // Forest
+                            if (n.humid > 0.4) [r, g, b] = [35, 85, 45]; // Dark Forest
+                            else [r, g, b] = [85, 145, 55]; // Forest
                         }
                     }
 
-                    // Shading (Slope-based)
+                    // Dynamic Shading
                     const nW = getNoise(x - 1, z).height;
                     const nN = getNoise(x, z - 1).height;
-                    const shade = 1.0 + (n.height - nW) * 2.0 + (n.height - nN) * 2.0;
+                    const shade = 1.0 + (n.height - nW) * 2.5 + (n.height - nN) * 2.5;
 
                     const topColor = `rgb(${r * shade}, ${g * shade}, ${b * shade})`;
-                    const leftColor = `rgb(${r * 0.65 * shade}, ${g * 0.65 * shade}, ${b * 0.65 * shade})`;
-                    const rightColor = `rgb(${r * 0.8 * shade}, ${g * 0.8 * shade}, ${b * 0.8 * shade})`;
+                    const leftColor = `rgb(${r * 0.6 * shade}, ${g * 0.6 * shade}, ${b * 0.6 * shade})`;
+                    const rightColor = `rgb(${r * 0.75 * shade}, ${g * 0.75 * shade}, ${b * 0.75 * shade})`;
 
-                    const sideH = isActuallyWater ? (seaLevel - n.height) * 15 : 4 + terrainY;
+                    const sideH = isActuallyWater ? (seaLevel - n.height) * 18 : 5 + terrainY;
 
                     // Sides
                     ctx.beginPath();
@@ -450,6 +447,8 @@
                     ctx.fillStyle = topColor; ctx.fill();
                 }
             }
+
+            // --- Plot Boundaries ---
 
             // --- Plot Boundaries ---
             lands.forEach(l => {
