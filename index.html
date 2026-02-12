@@ -303,16 +303,14 @@
 
             initNoise();
 
-            // Dynamic Sizing to match container
+            // Dynamic Sizing
             const rect = canvas.getBoundingClientRect();
-            // Use a higher internal resolution for crispness, then scale down via CSS if needed, 
-            // but for performance 1:1 match with displayed size is usually best for this kind of per-pixel op.
             const width = Math.floor(rect.width) || 300;
             const height = Math.floor(rect.height) || 250;
             canvas.width = width;
             canvas.height = height;
 
-            // Map Center
+            // Map Data Center
             const c1 = land.coords[0];
             const c2 = land.coords[1];
             const pMinX = Math.min(c1.x, c2.x);
@@ -320,193 +318,183 @@
             const pMinZ = Math.min(c1.z, c2.z);
             const pMaxZ = Math.max(c1.z, c2.z);
 
-            const plotW = pMaxX - pMinX;
-            const plotD = pMaxZ - pMinZ;
+            const plotW = pMaxX - pMinX + 1;
+            const plotD = pMaxZ - pMinZ + 1;
             const plotCenterX = pMinX + (plotW / 2);
             const plotCenterZ = pMinZ + (plotD / 2);
 
-            // View Calculation: "Extend to end of map view" & "same camera position"
-            // We want the plot centered. The view scale depends on plot size.
+            // --- Isometric Zoom Logic ---
+            // User wants "small land show small map" (focused)
+            // Heuristic: View radius based on plot size, but clamped.
             const maxDim = Math.max(plotW, plotD);
-            // Heuristic: Show enough context. Small plots get more context (~100 blocks view).
-            // Large plots get proportional context.
-            const nominalViewBlocks = Math.max(120, maxDim * 2.0);
+            // viewRadiusInBlocks: effectively how many blocks diagonally from center to corner
+            // Tighter zoom for small plots:
+            let viewRadiusInBlocks = Math.max(20, maxDim * 1.2);
+            if (maxDim > 100) viewRadiusInBlocks = maxDim * 0.8; // Zoom out for massive plots
 
-            // Aspect Ratio Correction
-            // We need mapWorldW / mapWorldH == width / height
-            const canvasAspect = width / height;
+            // Isometric Scale
+            // canvas width covers roughly 2 * viewRadiusInBlocks horizontally
+            const isoScale = width / (viewRadiusInBlocks * 2.5);
 
-            let mapWorldW, mapWorldH;
-            if (canvasAspect > 1) {
-                mapWorldH = nominalViewBlocks;
-                mapWorldW = nominalViewBlocks * canvasAspect;
-            } else {
-                mapWorldW = nominalViewBlocks;
-                mapWorldH = nominalViewBlocks / canvasAspect;
-            }
+            // Center Offset
+            const cx = width / 2;
+            const cy = height / 2;
 
-            const minX = Math.floor(plotCenterX - mapWorldW / 2);
-            const minZ = Math.floor(plotCenterZ - mapWorldH / 2);
+            // Coordinate Transform: World -> Screen (Isometric)
+            const toScreen = (x, y, z) => {
+                const dx = x - plotCenterX;
+                const dz = z - plotCenterZ;
+                return {
+                    x: cx + (dx - dz) * isoScale,
+                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.6) // y is height
+                };
+            };
 
-            // Terrain Render
-            const imageData = ctx.createImageData(width, height);
-            const data = imageData.data;
-            const blocksPerPixel = mapWorldW / width; // roughly same for Z
+            // Render Iterate
+            // We iterate in a diamond pattern or just a large enough square around center
+            // To fill the screen, we need to cover enough X and Z
+            const renderDist = Math.ceil(width / isoScale) + 10;
+            const rangeX = renderDist;
+            const rangeZ = renderDist;
 
-            for (let py = 0; py < height; py++) {
-                // Optimization: Pre-calc Z world coord
-                const wz = minZ + (py * blocksPerPixel);
-                for (let px = 0; px < width; px++) {
-                    const wx = minX + (px * blocksPerPixel);
+            // Create offscreen buffer or direct pixel manipulation?
+            // Direct texturing is hard with isometric. We'll draw polygons (diamond shapes).
+            // To avoid gaps, we draw standard diamonds.
 
-                    const { height: h, moisture: m } = getNoise(wx, wz);
+            // Optimization: Painters Algorithm (Back to Front)
+            // Z increases -> closer? No, in iso, (0,0) is top. (maxY, maxY) is bottom.
+            // We draw from minX, minZ to maxX, maxZ.
 
-                    let r, g, b;
+            const rMinX = Math.floor(plotCenterX - rangeX);
+            const rMaxX = Math.floor(plotCenterX + rangeX);
+            const rMinZ = Math.floor(plotCenterZ - rangeZ);
+            const rMaxZ = Math.floor(plotCenterZ + rangeZ);
 
-                    // Enhanced Biome Palette
-                    if (h < 0.44) { // Deep Ocean
-                        r = 30; g = 60; b = 160;
-                    } else if (h < 0.49) { // Ocean
-                        r = 60; g = 110; b = 210;
-                    } else if (h < 0.51) { // Beach
-                        r = 238; g = 214; b = 175;
-                    } else {
-                        // Land
-                        if (h > 0.88) { // Snow Peak
-                            r = 245; g = 245; b = 255;
-                        } else if (h > 0.72) { // Mountains / Stone
-                            if (m < 0.3) { r = 130; g = 120; b = 110; } // Dry
-                            else { r = 110; g = 110; b = 110; }
-                        } else {
-                            // Vegetation
-                            if (m < 0.25) { // Desert
-                                r = 220; g = 190; b = 110;
-                            } else if (m < 0.45) { // Plains / Savanna
-                                r = 140; g = 185; b = 75;
-                            } else if (m < 0.75) { // Forest
-                                r = 60; g = 150; b = 60;
-                            } else { // Jungle / Swamp
-                                r = 40; g = 115; b = 50;
-                            }
-                        }
+            ctx.clearRect(0, 0, width, height);
+
+            // Enhance: We can't iterate pixel-by-pixel easily for isometric without reverse transform
+            // So we iterate blocks.
+            // Limit total blocks to prevent lag on huge screens/zooms
+            // If scale is too small, resolution drops.
+
+            for (let z = rMinZ; z <= rMaxZ; z++) {
+                for (let x = rMinX; x <= rMaxX; x++) {
+                    const { height: h, moisture: m } = getNoise(x, z);
+
+                    // Block Height (0 to 1) -> scaled to visual height
+                    // Minecraft world height is 256, but here 0-1. Let's make mountains pop.
+                    const terrainY = Math.max(0, (h - 0.45) * 20); // Sea level at 0.45
+
+                    // Screen Coords
+                    const s = toScreen(x, terrainY, z);
+
+                    // Culling logic strict
+                    if (s.x < -isoScale || s.x > width + isoScale || s.y < -isoScale || s.y > height + isoScale) continue;
+
+                    // Color Palette (Minecraft-ish)
+                    let baseColor;
+                    if (h < 0.45) baseColor = { r: 60, g: 100, b: 190 }; // Water
+                    else if (h < 0.48) baseColor = { r: 240, g: 230, b: 150 }; // Sand
+                    else if (h > 0.85) baseColor = { r: 255, g: 255, b: 255 }; // Snow
+                    else if (h > 0.70) baseColor = { r: 120, g: 120, b: 120 }; // Stone
+                    else {
+                        // Grass/Forest
+                        if (m < 0.3) baseColor = { r: 180, g: 200, b: 100 }; // Plains
+                        else if (m < 0.6) baseColor = { r: 100, g: 160, b: 60 }; // Forest
+                        else baseColor = { r: 70, g: 120, b: 50 }; // Swamp/Jungle
                     }
 
-                    // 3D Hillshading effect
-                    // Standard technique: derivative of noise
-                    // Sample slightly offset point for slope approximation
-                    // Since specific pixel derivative is expensive, we use a cheap analytical trick 
-                    // or just sample one neighbor since we are low-res relatively.
+                    // Lighting (Fake side shading)
+                    // Top face: bright. Right face: dark. Left face: medium.
 
-                    // Note: Calling getNoise again per pixel is heavy, so we fallback to a faster local estimation 
-                    // or just reuse the noise generated. But independent hillshade noise looks better for texture.
+                    // Draw Block Top (Diamond)
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y);
+                    ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5);
+                    ctx.lineTo(s.x, s.y + isoScale);
+                    ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5);
+                    ctx.closePath();
 
-                    // Let's use a separate high-freq noise for surface texture/bumpiness
-                    const slopeVal = terrainNoise.noise(wx * 0.01, 0, wz * 0.01);
-                    const slopeX = (terrainNoise.noise((wx + 1) * 0.005, 0, wz * 0.005) - terrainNoise.noise(wx * 0.005, 0, wz * 0.005)) * 40;
-                    const slopeZ = (terrainNoise.noise(wx * 0.005, 0, (wz + 1) * 0.005) - terrainNoise.noise(wx * 0.005, 0, wz * 0.005)) * 40;
+                    ctx.fillStyle = `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`;
+                    ctx.fill();
 
-                    // Light coming from North-West
-                    const light = (slopeX - slopeZ) + (h * 5); // Add height bias
-                    const shade = Math.max(-30, Math.min(30, light * 5));
-
-                    r = Math.max(0, Math.min(255, r + shade));
-                    g = Math.max(0, Math.min(255, g + shade));
-                    b = Math.max(0, Math.min(255, b + shade));
-
-                    const idx = (py * width + px) * 4;
-                    data[idx] = r;
-                    data[idx + 1] = g;
-                    data[idx + 2] = b;
-                    data[idx + 3] = 255;
+                    // Optional: Borders for blocky definition?
+                    // ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    // ctx.lineWidth = 0.5;
+                    // ctx.stroke();
                 }
             }
-            ctx.putImageData(imageData, 0, 0);
 
-            // --- Overlays (Boundaries) ---
-            const worldToScreen = (wx, wz) => ({
-                x: (wx - minX) / blocksPerPixel,
-                y: (wz - minZ) / blocksPerPixel
-            });
-
+            // --- Boundaries (Overlay) ---
+            // Draw lines on top of terrain
             lands.forEach(l => {
-                const lMinX = Math.min(l.coords[0].x, l.coords[1].x);
-                const lMaxX = Math.max(l.coords[0].x, l.coords[1].x);
-                const lMinZ = Math.min(l.coords[0].z, l.coords[1].z);
-                const lMaxZ = Math.max(l.coords[0].z, l.coords[1].z);
-
-                // Culling: Check if land overlaps with current map view
-                // Map view is [minX, minX + mapWorldW] x [minZ, minZ + mapWorldH]
-                if (lMaxX < minX || lMinX > minX + mapWorldW || lMaxZ < minZ || lMinZ > minZ + mapWorldH) return;
-
                 const isMyLand = (l.owner === currentUser.minecraftName);
-                const isCurrentPlot = (l === land); // The specific card we are rendering
+                const isCurrentPlot = (l === land);
 
-                // User Request: "show others land will be shown in red... my owned land with dark green"
-                // "dont show full land boundry of other but show when the other land is just beside me"
-                // My interpretation: Always show boundaries if they are in view.
+                // We need to draw the boundary box in isometric
+                const lx1 = Math.min(l.coords[0].x, l.coords[1].x);
+                const lx2 = Math.max(l.coords[0].x, l.coords[1].x) + 1; // +1 to cover full block
+                const lz1 = Math.min(l.coords[0].z, l.coords[1].z);
+                const lz2 = Math.max(l.coords[0].z, l.coords[1].z) + 1;
 
-                let strokeColor, fillColor, lineW;
+                // Check visibility rough
+                if (lx2 < rMinX || lx1 > rMaxX || lz2 < rMinZ || lz1 > rMaxZ) return;
 
-                if (isMyLand) {
-                    strokeColor = '#166534'; // Dark Green
-                    fillColor = 'rgba(22, 101, 52, 0.2)';
-                    lineW = 2;
-                } else {
-                    strokeColor = '#dc2626'; // Red
-                    fillColor = 'rgba(220, 38, 38, 0.15)';
-                    lineW = 1;
-                }
+                let strokeStyle = isMyLand ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.8)';
+                if (isCurrentPlot) strokeStyle = '#4ade80';
 
-                if (isCurrentPlot) {
-                    strokeColor = '#4ade80'; // Brighter green for active focus
-                    lineW = 3;
-                    fillColor = 'rgba(74, 222, 128, 0.05)'; // Clearer inside
-                }
+                // Draw bounding box at approximate terrain height of corners
+                // Averaging height for smoother look or just floating slightly
+                const getH = (x, z) => {
+                    const { height: h } = getNoise(x, z);
+                    return Math.max(0, (h - 0.45) * 20);
+                };
 
-                const p1 = worldToScreen(lMinX, lMinZ);
-                const p2 = worldToScreen(lMaxX, lMaxZ);
+                ctx.lineWidth = isCurrentPlot ? 3 : 2;
+                ctx.strokeStyle = strokeStyle;
 
-                // Canvas coords
-                const x = p1.x;
-                const y = p1.y;
-                const w = Math.max(1, p2.x - p1.x);
-                const h = Math.max(1, p2.y - p1.y);
+                ctx.beginPath();
+                // We'll trace the perimeter. 
+                // To look "glued" to terrain, we should ideally trace every block, but that's expensive.
+                // We'll calculate corners and Draw floating box for now (cleaner UI)
+                const y1 = getH(lx1, lz1) + 2; // hover slightly
+                const p1 = toScreen(lx1, y1, lz1);
 
-                ctx.fillStyle = fillColor;
-                ctx.fillRect(x, y, w, h);
+                const y2 = getH(lx2, lz1) + 2;
+                const p2 = toScreen(lx2, y2, lz1);
 
-                ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = lineW;
-                ctx.strokeRect(x, y, w, h);
+                const y3 = getH(lx2, lz2) + 2;
+                const p3 = toScreen(lx2, y3, lz2);
 
-                // Optional: Label
-                if (w > 30 && h > 15) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.font = isCurrentPlot ? 'bold 12px Inter' : '10px Inter';
+                const y4 = getH(lx1, lz2) + 2;
+                const p4 = toScreen(lx1, y4, lz2);
+
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.stroke();
+
+                // Label
+                if (isCurrentPlot || (isoScale > 8)) { // Only show label if zoomed enough
+                    const cx = (lx1 + lx2) / 2;
+                    const cz = (lz1 + lz2) / 2;
+                    const cy = getH(cx, cz) + 5;
+                    const p = toScreen(cx, cy, cz);
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 12px Inter';
                     ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 4;
                     const name = l.owner.length > 8 ? l.owner.substring(0, 6) + '..' : l.owner;
-                    ctx.fillText(name, x + w / 2, y + h / 2);
+                    ctx.fillText(name, p.x, p.y - 10);
+                    ctx.shadowBlur = 0;
                 }
             });
 
-            // Scale Bar
-            const barWidthBlocks = Math.pow(10, Math.floor(Math.log10(mapWorldW * 0.25)));
-            const barPixelWidth = barWidthBlocks / blocksPerPixel;
-
-            if (barPixelWidth > 20) {
-                ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                ctx.shadowBlur = 4;
-                ctx.fillStyle = 'white';
-                ctx.fillRect(15, height - 15, barPixelWidth, 4);
-                ctx.fillRect(15, height - 20, 1, 9); // left tick
-                ctx.fillRect(15 + barPixelWidth, height - 20, 1, 9); // right tick
-
-                ctx.font = '11px sans-serif';
-                ctx.textAlign = 'left';
-                ctx.fillText(`${barWidthBlocks} m`, 20 + barPixelWidth, height - 12);
-                ctx.shadowBlur = 0;
-            }
+            // No scale bar in isometric usually, or different logic.
         }
 
 
