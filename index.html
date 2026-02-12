@@ -250,36 +250,42 @@
 
         // --- Terrain Map System ---
 
-        // Seeded PRNG
-        function mulberry32(seed) {
+        // Better Seeded PRNG that handles 64-bit seeds better
+        function splitmix64(seed) {
+            let s = BigInt(seed);
             return function () {
-                seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-                var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-                t = t + Math.imul(t ^ t >>> 7, 61 | t) | 0;
-                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                s += BigInt(0x9e3779b97f4a7c15);
+                let z = s;
+                z = (z ^ (z >> BigInt(30))) * BigInt(0xbf58476d1ce4e5b9);
+                z = (z ^ (z >> BigInt(27))) * BigInt(0x94d049bb133111eb);
+                z = z ^ (z >> BigInt(31));
+                return Number(z & BigInt(0xFFFFFFFF)) / 4294967296;
             }
         }
 
         let terrainNoise = null;
         let biomeNoise = null;
+        let weirdnessNoise = null;
 
         function initNoise() {
             if (!terrainNoise) {
-                const rng = mulberry32(WORLD_SEED);
+                const rng = splitmix64(WORLD_SEED);
                 terrainNoise = new ClassicalNoise(rng);
-                const rng2 = mulberry32(WORLD_SEED + 12345);
+                const rng2 = splitmix64(WORLD_SEED + 123456789);
                 biomeNoise = new ClassicalNoise(rng2);
+                const rng3 = splitmix64(WORLD_SEED ^ 0xABCDEF);
+                weirdnessNoise = new ClassicalNoise(rng3);
             }
         }
 
-        // Multi-octave FBM for detail
-        function fbm(x, z, octaves) {
+        // Refined FBM with lower frequency for world-scale accuracy
+        function fbm(x, z, octaves, frequency = 0.0005) {
             let total = 0;
             let amp = 1;
-            let freq = 0.003; // Slightly higher frequency for better zoom detail
+            let freq = frequency;
             let max = 0;
             for (let i = 0; i < octaves; i++) {
-                total += terrainNoise.noise(x * freq, 0, z * freq) * amp;
+                total += terrainNoise.noise(x * freq, 1.5, z * freq) * amp;
                 max += amp;
                 amp *= 0.5;
                 freq *= 2;
@@ -289,14 +295,34 @@
 
         function getNoise(x, z) {
             initNoise();
-            // Continentalness (Height) - Multi-octave FBM
-            const height = fbm(x, z, 6);
             
-            // Temperature / Moisture for biomes
-            const temp = biomeNoise.noise(x * 0.001, 10, z * 0.001) + 0.5;
-            const moisture = biomeNoise.noise(x * 0.0012, 20, z * 0.0012) + 0.5;
+            // 1. Continentalness (Huge scale: Land vs Deep Ocean)
+            const cont = fbm(x, z, 5, 0.0004); 
             
-            return { height, temp, moisture };
+            // 2. Erosion (Flat vs Rugged)
+            const erosion = fbm(x + 5000, z + 5000, 4, 0.001);
+            
+            // 3. Weirdness (Used for Rivers and Varied Biomes)
+            const weird = weirdnessNoise.noise(x * 0.0012, 0, z * 0.0012) + 0.5;
+            
+            // 4. Biome Factors (Temp/Humidity)
+            const temp = biomeNoise.noise(x * 0.0008, 10, z * 0.0008) + 0.5;
+            const humid = biomeNoise.noise(x * 0.0008, 50, z * 0.0008) + 0.5;
+            
+            // River Detection: Rivers occur in "valleys" of weirdness
+            const isRiverVal = Math.abs(weird - 0.5) < 0.035 && cont > 0.45;
+
+            // Final Height Calculation
+            let h = cont;
+            if (isRiverVal) {
+                h -= 0.08; // Carve the river
+            } else if (h > 0.5) {
+                // Mountain influence based on erosion
+                const peak = Math.max(0, fbm(x, z, 3, 0.005) - 0.5) * 2;
+                h += peak * (1.0 - erosion) * 0.4;
+            }
+
+            return { height: h, temp, humid, erosion, weird, isRiver: isRiverVal };
         }
 
         function renderTerrainMap(canvasId, land) {
@@ -306,14 +332,12 @@
 
             initNoise();
 
-            // Dynamic Sizing
             const rect = canvas.getBoundingClientRect();
             const width = Math.floor(rect.width) || 300;
             const height = Math.floor(rect.height) || 250;
             canvas.width = width;
             canvas.height = height;
 
-            // Map Data Center
             const c1 = land.coords[0];
             const c2 = land.coords[1];
             const pMinX = Math.min(c1.x, c2.x);
@@ -326,12 +350,12 @@
             const plotCenterX = pMinX + (plotW / 2);
             const plotCenterZ = pMinZ + (plotD / 2);
 
-            // --- Isometric Zoom Logic ---
+            // Zoom logic: Smaller plots show more context
             const maxDim = Math.max(plotW, plotD);
-            let viewRadiusInBlocks = Math.max(25, maxDim * 1.5);
-            if (maxDim > 50) viewRadiusInBlocks = maxDim * 1.1;
+            let viewRadius = Math.max(40, maxDim * 1.6);
+            if (maxDim > 100) viewRadius = maxDim * 1.1;
 
-            const isoScale = width / (viewRadiusInBlocks * 2.2);
+            const isoScale = width / (viewRadius * 2.5);
             const cx = width / 2;
             const cy = height / 2;
 
@@ -340,11 +364,11 @@
                 const dz = z - plotCenterZ;
                 return {
                     x: cx + (dx - dz) * isoScale,
-                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.5)
+                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.7)
                 };
             };
 
-            const renderDist = Math.ceil(width / isoScale) + 5;
+            const renderDist = Math.ceil(width / isoScale) + 4;
             const rMinX = Math.floor(plotCenterX - renderDist);
             const rMaxX = Math.floor(plotCenterX + renderDist);
             const rMinZ = Math.floor(plotCenterZ - renderDist);
@@ -352,80 +376,82 @@
 
             ctx.clearRect(0, 0, width, height);
 
-            // Optimization: Iterate in back-to-front order (minX+minZ to maxX+maxZ)
+            const seaLevel = 0.48;
+
             for (let sum = rMinX + rMinZ; sum <= rMaxX + rMaxZ; sum++) {
                 for (let x = rMinX; x <= rMaxX; x++) {
                     const z = sum - x;
                     if (z < rMinZ || z > rMaxZ) continue;
 
-                    const { height: h, temp: t, moisture: m } = getNoise(x, z);
-                    
-                    // Sea level at 0.5
-                    const seaLevel = 0.5;
-                    const terrainY = Math.max(0, (h - seaLevel) * 25);
-                    const isWater = h < seaLevel;
-                    const visualY = isWater ? 0 : terrainY;
+                    const n = getNoise(x, z);
+                    const isActuallyWater = n.height < seaLevel;
+                    const terrainY = (n.height - seaLevel) * 40;
+                    const visualY = isActuallyWater ? 0 : terrainY;
 
                     const s = toScreen(x, visualY, z);
                     if (s.x < -isoScale * 2 || s.x > width + isoScale * 2 || s.y < -isoScale * 2 || s.y > height + isoScale * 2) continue;
 
-                    // Color Palette
+                    // Biome Colors (Minecraft 1.21-ish)
                     let r, g, b;
-                    if (h < 0.45) { [r, g, b] = [45, 80, 160]; } // Deep Water
-                    else if (h < seaLevel) { [r, g, b] = [60, 110, 200]; } // Shallow Water
-                    else if (h < 0.53) { [r, g, b] = [235, 220, 140]; } // Sand
-                    else if (h > 0.85) { [r, g, b] = [245, 245, 255]; } // Snow
-                    else if (h > 0.72) { [r, g, b] = [130, 130, 135]; } // Stone
+                    if (n.height < 0.4) { [r, g, b] = [20, 50, 120]; } // Deep Ocean
+                    else if (isActuallyWater) { 
+                        if (n.isRiver) [r, g, b] = [60, 130, 200]; // River Blue
+                        else [r, g, b] = [40, 80, 180]; // Regular Ocean
+                    }
+                    else if (n.height < seaLevel + 0.015) { [r, g, b] = [220, 200, 140]; } // Beach/Sand
+                    else if (n.height > 0.85) { [r, g, b] = [255, 255, 255]; } // Snow Peaks
+                    else if (n.height > 0.75) { [r, g, b] = [130, 130, 140]; } // Stony Peaks
                     else {
-                        // Biomes based on temp/moisture
-                        if (t < 0.3) { [r, g, b] = [120, 150, 100]; } // Tundra
-                        else if (m < 0.35) { [r, g, b] = [160, 180, 80]; } // Savanna/Plains
-                        else if (m > 0.7) { [r, g, b] = [50, 100, 40]; } // Jungle/Swamp
-                        else { [r, g, b] = [90, 150, 60]; } // Forest
+                        // Land biomes based on Temp/Humid
+                        if (n.temp > 0.8) {
+                            if (n.humid < 0.4) [r, g, b] = [210, 185, 100]; // Desert
+                            else [r, g, b] = [40, 100, 30]; // Jungle
+                        } else if (n.temp < 0.3) {
+                            [r, g, b] = [120, 150, 120]; // Tundra/Taiga
+                        } else {
+                            if (n.humid > 0.7) [r, g, b] = [30, 70, 40]; // Dark Forest
+                            else if (n.humid < 0.35) [r, g, b] = [140, 170, 70]; // Plains
+                            else [r, g, b] = [70, 140, 50]; // Forest
+                        }
                     }
 
-                    // Shading
-                    const topColor = `rgb(${r}, ${g}, ${b})`;
-                    const leftColor = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
-                    const rightColor = `rgb(${Math.max(0, r - 15)}, ${Math.max(0, g - 15)}, ${Math.max(0, b - 15)})`;
+                    // Shading (Slope-based)
+                    const nW = getNoise(x - 1, z).height;
+                    const nN = getNoise(x, z - 1).height;
+                    const shade = 1.0 + (n.height - nW) * 2.0 + (n.height - nN) * 2.0;
 
-                    const sideH = isWater ? (seaLevel - h) * 10 : 2 + terrainY;
+                    const topColor = `rgb(${r * shade}, ${g * shade}, ${b * shade})`;
+                    const leftColor = `rgb(${r * 0.65 * shade}, ${g * 0.65 * shade}, ${b * 0.65 * shade})`;
+                    const rightColor = `rgb(${r * 0.8 * shade}, ${g * 0.8 * shade}, ${b * 0.8 * shade})`;
 
-                    // Draw Right Side
+                    const sideH = isActuallyWater ? (seaLevel - n.height) * 15 : 4 + terrainY;
+
+                    // Sides
                     ctx.beginPath();
                     ctx.moveTo(s.x, s.y + isoScale);
                     ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5);
                     ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5 + sideH * isoScale * 0.5);
                     ctx.lineTo(s.x, s.y + isoScale + sideH * isoScale * 0.5);
-                    ctx.fillStyle = rightColor;
-                    ctx.fill();
+                    ctx.fillStyle = rightColor; ctx.fill();
 
-                    // Draw Left Side
                     ctx.beginPath();
                     ctx.moveTo(s.x, s.y + isoScale);
                     ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5);
                     ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5 + sideH * isoScale * 0.5);
                     ctx.lineTo(s.x, s.y + isoScale + sideH * isoScale * 0.5);
-                    ctx.fillStyle = leftColor;
-                    ctx.fill();
+                    ctx.fillStyle = leftColor; ctx.fill();
 
-                    // Draw Top (Diamond)
+                    // Top
                     ctx.beginPath();
                     ctx.moveTo(s.x, s.y);
                     ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5);
                     ctx.lineTo(s.x, s.y + isoScale);
                     ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5);
-                    ctx.fillStyle = topColor;
-                    ctx.fill();
-                    
-                    if (isWater) {
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                        ctx.fill();
-                    }
+                    ctx.fillStyle = topColor; ctx.fill();
                 }
             }
 
-            // --- Boundaries (Overlay) ---
+            // --- Plot Boundaries ---
             lands.forEach(l => {
                 const isMyLand = (l.owner === currentUser.minecraftName);
                 const isCurrentPlot = (l === land);
@@ -437,22 +463,22 @@
 
                 if (lx2 < rMinX || lx1 > rMaxX || lz2 < rMinZ || lz1 > rMaxZ) return;
 
-                let strokeStyle = isMyLand ? '#22c55e' : '#ef4444';
+                let strokeStyle = isMyLand ? '#4ade80' : '#f87171';
                 if (isCurrentPlot) strokeStyle = '#fbbf24';
 
                 const getH = (x, z) => {
-                    const { height: h } = getNoise(x, z);
-                    return Math.max(0, (h - 0.5) * 25);
+                    const h = getNoise(x, z).height;
+                    return Math.max(0, (h - seaLevel) * 35);
                 };
 
                 ctx.lineWidth = isCurrentPlot ? 3 : 2;
                 ctx.strokeStyle = strokeStyle;
-                ctx.lineJoin = 'round';
+                ctx.setLineDash(isCurrentPlot ? [] : [5, 5]);
 
-                const h1 = getH(lx1, lz1) + 0.5;
-                const h2 = getH(lx2, lz1) + 0.5;
-                const h3 = getH(lx2, lz2) + 0.5;
-                const h4 = getH(lx1, lz2) + 0.5;
+                const h1 = getH(lx1, lz1) + 1;
+                const h2 = getH(lx2, lz1) + 1;
+                const h3 = getH(lx2, lz2) + 1;
+                const h4 = getH(lx1, lz2) + 1;
 
                 const p1 = toScreen(lx1, h1, lz1);
                 const p2 = toScreen(lx2, h2, lz1);
@@ -466,16 +492,16 @@
                 ctx.lineTo(p4.x, p4.y);
                 ctx.closePath();
                 ctx.stroke();
+                ctx.setLineDash([]);
 
-                // Plot Name
-                if (isCurrentPlot || isoScale > 10) {
-                    const pC = toScreen((lx1 + lx2) / 2, Math.max(h1, h2, h3, h4) + 4, (lz1 + lz2) / 2);
+                if (isCurrentPlot || isoScale > 12) {
+                    const pC = toScreen((lx1 + lx2) / 2, Math.max(h1, h2, h3, h4) + 6, (lz1 + lz2) / 2);
                     ctx.fillStyle = 'white';
-                    ctx.font = 'bold 11px Inter, sans-serif';
+                    ctx.font = '900 12px Inter, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.shadowColor = 'black';
-                    ctx.shadowBlur = 4;
-                    ctx.fillText(l.owner, pC.x, pC.y);
+                    ctx.shadowBlur = 6;
+                    ctx.fillText(l.owner.toUpperCase(), pC.x, pC.y);
                     ctx.shadowBlur = 0;
                 }
             });
