@@ -72,6 +72,33 @@
       "expirationTime": 1770893986214,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "Ansh",
+      "coords": [
+        {
+          "x": -76,
+          "y": 1,
+          "z": -194
+        },
+        {
+          "x": -95,
+          "y": 1,
+          "z": -205
+        }
+      ],
+      "blocks": 240,
+      "cost": 2711.9999999999995,
+      "baseCost": 2400,
+      "tax": 240,
+      "gst": 72,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "EZTBJ0",
+      "purchaseTime": 1770893706448,
+      "expirationTime": 1770894306448,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
