@@ -45,7 +45,35 @@
       "minecraftEdition": "Java"
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "owner": "Ansh",
+      "coords": [
+        {
+          "x": -68,
+          "y": 1,
+          "z": -44
+        },
+        {
+          "x": -131,
+          "y": 1,
+          "z": -55
+        }
+      ],
+      "blocks": 768,
+      "cost": 8678.4,
+      "baseCost": 7680,
+      "tax": 768,
+      "gst": 230.39999999999998,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "HVN7NO",
+      "purchaseTime": 1770899537931,
+      "expirationTime": 1770900137931,
+      "paid": false,
+      "status": "pending"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
