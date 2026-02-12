@@ -289,163 +289,31 @@
 
         function getNoise(x, z) {
             initNoise();
-            // Continentalness (Height)
-            const height = fbm(x, z, 5);
-            // Moisture / Temperature (Simpler noise)
-            const moisture = biomeNoise.noise(x * 0.0015, 0, z * 0.0015) + 0.5;
-            return { height, moisture };
+            // Continentalness (Height) - Multi-octave FBM
+            const height = fbm(x, z, 6);
+            
+            // Temperature / Moisture for biomes
+            const temp = biomeNoise.noise(x * 0.001, 10, z * 0.001) + 0.5;
+            const moisture = biomeNoise.noise(x * 0.0012, 20, z * 0.0012) + 0.5;
+            
+            return { height, temp, moisture };
         }
-
-        // --- Global Map System (Chunkbase Style) ---
-
-        const WorldCache = {
-            canvas: null,
-            ctx: null,
-            width: 2000, // World blocks width to cache
-            height: 2000, // World blocks height to cache
-            center: { x: 0, z: 0 }, // Center of the cached world
-            isGenerated: false,
-
-            init: function () {
-                if (this.canvas) return;
-                this.canvas = document.createElement('canvas');
-                this.canvas.width = this.width;
-                this.canvas.height = this.height;
-                this.ctx = this.canvas.getContext('2d');
-            },
-
-            generate: function () {
-                if (!this.canvas) this.init();
-                initNoise();
-
-                const imageData = this.ctx.createImageData(this.width, this.height);
-                const data = imageData.data;
-
-                // We cache from [center.x - width/2, center.z - height/2]
-                const startX = Math.floor(this.center.x - this.width / 2);
-                const startZ = Math.floor(this.center.z - this.height / 2);
-
-                for (let z = 0; z < this.height; z++) {
-                    const wz = startZ + z;
-                    for (let x = 0; x < this.width; x++) {
-                        const wx = startX + x;
-
-                        const { height: h, moisture: m } = getNoise(wx, wz);
-
-                        let r, g, b;
-
-                        // --- Chunkbase-ish Palette ---
-                        // Distinct, solid colors. 
-
-                        if (h < 0.45) {
-                            // Deep Ocean
-                            r = 60; g = 75; b = 112;
-                        } else if (h < 0.49) {
-                            // Ocean
-                            r = 68; g = 85; b = 178;
-                        } else if (h < 0.51) {
-                            // Beach / Sand
-                            r = 216; g = 198; b = 144;
-                        } else {
-                            // Land
-                            if (h > 0.85) {
-                                // Snow / Peaks
-                                r = 255; g = 255; b = 255;
-                            } else if (h > 0.70) {
-                                // Stone / Mountains
-                                r = 136; g = 136; b = 136;
-                            } else {
-                                // Vegetation
-                                if (m < 0.25) {
-                                    // Desert
-                                    r = 216; g = 198; b = 144;
-                                } else if (m < 0.45) {
-                                    // Plains (Bright Green)
-                                    r = 120; g = 168; b = 70;
-                                } else if (m < 0.75) {
-                                    // Forest (Darker Green)
-                                    r = 72; g = 120; b = 46;
-                                } else {
-                                    // Jungle / Swamp
-                                    r = 60; g = 90; b = 30;
-                                }
-                            }
-                        }
-
-                        // Hillshading (Fake 3D Top-Down)
-                        // Simple derivative: is the neighbor higher?
-                        // We can't easily check neighbor in this loop without 2 passes or noise recall.
-                        // Recalling noise is fine for init.
-
-                        // Sample North (-Z) height for shading
-                        // Light comes from North-West usually in UI maps
-                        const hNorth = getNoise(wx, wz - 1).height;
-                        const hWest = getNoise(wx - 1, wz).height;
-
-                        // Slope
-                        const slope = (h - hNorth) + (h - hWest);
-                        // If slope is positive (we are higher), it catches light (lighter).
-                        // If slope is negative (we are lower), it is in shadow (darker).
-
-                        const shade = slope * 250; // Strength
-
-                        r = Math.max(0, Math.min(255, r + shade));
-                        g = Math.max(0, Math.min(255, g + shade));
-                        b = Math.max(0, Math.min(255, b + shade));
-
-                        const idx = (z * this.width + x) * 4;
-                        data[idx] = r;
-                        data[idx + 1] = g;
-                        data[idx + 2] = b;
-                        data[idx + 3] = 255;
-                    }
-                }
-
-                this.ctx.putImageData(imageData, 0, 0);
-                this.isGenerated = true;
-                console.log("Global Map Generated");
-            },
-
-            // Get the pixel data or draw coordinate for a slice
-            drawSlice: function (targetCtx, targetW, targetH, worldRect) {
-                if (!this.isGenerated) this.generate();
-
-                // worldRect = { x, z, w, h } (in blocks)
-                // We need to find where this rect is on our cached canvas.
-
-                const cacheStartX = Math.floor(this.center.x - this.width / 2);
-                const cacheStartZ = Math.floor(this.center.z - this.height / 2);
-
-                const srcX = worldRect.x - cacheStartX;
-                const srcZ = worldRect.z - cacheStartZ;
-                const srcW = worldRect.w;
-                const srcH = worldRect.h;
-
-                // Draw from cache to target
-                // disable smoothing for retro look
-                targetCtx.imageSmoothingEnabled = false;
-
-                targetCtx.drawImage(
-                    this.canvas,
-                    srcX, srcZ, srcW, srcH,
-                    0, 0, targetW, targetH
-                );
-            }
-        };
 
         function renderTerrainMap(canvasId, land) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
 
+            initNoise();
+
             // Dynamic Sizing
             const rect = canvas.getBoundingClientRect();
-            canvas.width = Math.floor(rect.width) || 300;
-            canvas.height = Math.floor(rect.height) || 250;
-            const w = canvas.width;
-            const h = canvas.height;
+            const width = Math.floor(rect.width) || 300;
+            const height = Math.floor(rect.height) || 250;
+            canvas.width = width;
+            canvas.height = height;
 
-            // Plot Info
+            // Map Data Center
             const c1 = land.coords[0];
             const c2 = land.coords[1];
             const pMinX = Math.min(c1.x, c2.x);
@@ -458,98 +326,159 @@
             const plotCenterX = pMinX + (plotW / 2);
             const plotCenterZ = pMinZ + (plotD / 2);
 
-            // Zoom Logic (Top Down)
-            // Show plot + context.
-            // Small plots: Show ~100 blocks wide context.
-            // Large plots: Show 1.5x plot size.
+            // --- Isometric Zoom Logic ---
             const maxDim = Math.max(plotW, plotD);
-            const viewBlocks = Math.max(120, maxDim * 1.5);
+            let viewRadiusInBlocks = Math.max(25, maxDim * 1.5);
+            if (maxDim > 50) viewRadiusInBlocks = maxDim * 1.1;
 
-            // Aspect Ratio Calc
-            const aspect = w / h;
-            let viewW, viewH;
+            const isoScale = width / (viewRadiusInBlocks * 2.2);
+            const cx = width / 2;
+            const cy = height / 2;
 
-            if (aspect > 1) {
-                viewH = viewBlocks;
-                viewW = viewBlocks * aspect;
-            } else {
-                viewW = viewBlocks;
-                viewH = viewBlocks / aspect;
-            }
-
-            const viewMinX = Math.floor(plotCenterX - viewW / 2);
-            const viewMinZ = Math.floor(plotCenterZ - viewH / 2);
-
-            // Draw World Slice
-            WorldCache.drawSlice(ctx, w, h, {
-                x: viewMinX,
-                z: viewMinZ,
-                w: viewW,
-                h: viewH
-            });
-
-            // Draw Boundaries
-            // We need to project world coords to canvas coords
-            const toCanvas = (wx, wz) => {
+            const toScreen = (x, y, z) => {
+                const dx = x - plotCenterX;
+                const dz = z - plotCenterZ;
                 return {
-                    x: ((wx - viewMinX) / viewW) * w,
-                    y: ((wz - viewMinZ) / viewH) * h
+                    x: cx + (dx - dz) * isoScale,
+                    y: cy + ((dx + dz) * isoScale * 0.5) - (y * isoScale * 0.5)
                 };
             };
 
-            const drawBox = (l, color, lineWidth, fill) => {
+            const renderDist = Math.ceil(width / isoScale) + 5;
+            const rMinX = Math.floor(plotCenterX - renderDist);
+            const rMaxX = Math.floor(plotCenterX + renderDist);
+            const rMinZ = Math.floor(plotCenterZ - renderDist);
+            const rMaxZ = Math.floor(plotCenterZ + renderDist);
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Optimization: Iterate in back-to-front order (minX+minZ to maxX+maxZ)
+            for (let sum = rMinX + rMinZ; sum <= rMaxX + rMaxZ; sum++) {
+                for (let x = rMinX; x <= rMaxX; x++) {
+                    const z = sum - x;
+                    if (z < rMinZ || z > rMaxZ) continue;
+
+                    const { height: h, temp: t, moisture: m } = getNoise(x, z);
+                    
+                    // Sea level at 0.5
+                    const seaLevel = 0.5;
+                    const terrainY = Math.max(0, (h - seaLevel) * 25);
+                    const isWater = h < seaLevel;
+                    const visualY = isWater ? 0 : terrainY;
+
+                    const s = toScreen(x, visualY, z);
+                    if (s.x < -isoScale * 2 || s.x > width + isoScale * 2 || s.y < -isoScale * 2 || s.y > height + isoScale * 2) continue;
+
+                    // Color Palette
+                    let r, g, b;
+                    if (h < 0.45) { [r, g, b] = [45, 80, 160]; } // Deep Water
+                    else if (h < seaLevel) { [r, g, b] = [60, 110, 200]; } // Shallow Water
+                    else if (h < 0.53) { [r, g, b] = [235, 220, 140]; } // Sand
+                    else if (h > 0.85) { [r, g, b] = [245, 245, 255]; } // Snow
+                    else if (h > 0.72) { [r, g, b] = [130, 130, 135]; } // Stone
+                    else {
+                        // Biomes based on temp/moisture
+                        if (t < 0.3) { [r, g, b] = [120, 150, 100]; } // Tundra
+                        else if (m < 0.35) { [r, g, b] = [160, 180, 80]; } // Savanna/Plains
+                        else if (m > 0.7) { [r, g, b] = [50, 100, 40]; } // Jungle/Swamp
+                        else { [r, g, b] = [90, 150, 60]; } // Forest
+                    }
+
+                    // Shading
+                    const topColor = `rgb(${r}, ${g}, ${b})`;
+                    const leftColor = `rgb(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)})`;
+                    const rightColor = `rgb(${Math.max(0, r - 15)}, ${Math.max(0, g - 15)}, ${Math.max(0, b - 15)})`;
+
+                    const sideH = isWater ? (seaLevel - h) * 10 : 2 + terrainY;
+
+                    // Draw Right Side
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y + isoScale);
+                    ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5);
+                    ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5 + sideH * isoScale * 0.5);
+                    ctx.lineTo(s.x, s.y + isoScale + sideH * isoScale * 0.5);
+                    ctx.fillStyle = rightColor;
+                    ctx.fill();
+
+                    // Draw Left Side
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y + isoScale);
+                    ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5);
+                    ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5 + sideH * isoScale * 0.5);
+                    ctx.lineTo(s.x, s.y + isoScale + sideH * isoScale * 0.5);
+                    ctx.fillStyle = leftColor;
+                    ctx.fill();
+
+                    // Draw Top (Diamond)
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y);
+                    ctx.lineTo(s.x + isoScale, s.y + isoScale * 0.5);
+                    ctx.lineTo(s.x, s.y + isoScale);
+                    ctx.lineTo(s.x - isoScale, s.y + isoScale * 0.5);
+                    ctx.fillStyle = topColor;
+                    ctx.fill();
+                    
+                    if (isWater) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // --- Boundaries (Overlay) ---
+            lands.forEach(l => {
+                const isMyLand = (l.owner === currentUser.minecraftName);
+                const isCurrentPlot = (l === land);
+
                 const lx1 = Math.min(l.coords[0].x, l.coords[1].x);
                 const lx2 = Math.max(l.coords[0].x, l.coords[1].x) + 1;
                 const lz1 = Math.min(l.coords[0].z, l.coords[1].z);
                 const lz2 = Math.max(l.coords[0].z, l.coords[1].z) + 1;
 
-                // Culling
-                if (lx2 < viewMinX || lx1 > viewMinX + viewW || lz2 < viewMinZ || lz1 > viewMinZ + viewH) return;
+                if (lx2 < rMinX || lx1 > rMaxX || lz2 < rMinZ || lz1 > rMaxZ) return;
 
-                const p1 = toCanvas(lx1, lz1);
-                const p2 = toCanvas(lx2, lz2); // bottom-right logic
+                let strokeStyle = isMyLand ? '#22c55e' : '#ef4444';
+                if (isCurrentPlot) strokeStyle = '#fbbf24';
 
-                const bx = p1.x;
-                const by = p1.y;
-                const bw = p2.x - p1.x;
-                const bh = p2.y - p1.y;
+                const getH = (x, z) => {
+                    const { height: h } = getNoise(x, z);
+                    return Math.max(0, (h - 0.5) * 25);
+                };
 
-                if (fill) {
-                    ctx.fillStyle = fill;
-                    ctx.fillRect(bx, by, bw, bh);
-                }
+                ctx.lineWidth = isCurrentPlot ? 3 : 2;
+                ctx.strokeStyle = strokeStyle;
+                ctx.lineJoin = 'round';
 
-                ctx.strokeStyle = color;
-                ctx.lineWidth = lineWidth;
-                ctx.strokeRect(bx, by, bw, bh);
+                const h1 = getH(lx1, lz1) + 0.5;
+                const h2 = getH(lx2, lz1) + 0.5;
+                const h3 = getH(lx2, lz2) + 0.5;
+                const h4 = getH(lx1, lz2) + 0.5;
 
-                // Label
-                if (bw > 30) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                    ctx.font = lineWidth > 1 ? 'bold 11px Inter' : '10px Inter';
+                const p1 = toScreen(lx1, h1, lz1);
+                const p2 = toScreen(lx2, h2, lz1);
+                const p3 = toScreen(lx2, h3, lz2);
+                const p4 = toScreen(lx1, h4, lz2);
+
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.lineTo(p3.x, p3.y);
+                ctx.lineTo(p4.x, p4.y);
+                ctx.closePath();
+                ctx.stroke();
+
+                // Plot Name
+                if (isCurrentPlot || isoScale > 10) {
+                    const pC = toScreen((lx1 + lx2) / 2, Math.max(h1, h2, h3, h4) + 4, (lz1 + lz2) / 2);
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 11px Inter, sans-serif';
                     ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    const name = l.owner.length > 8 ? l.owner.substring(0, 6) + '..' : l.owner;
-                    ctx.fillText(name, bx + bw / 2, by + bh / 2);
+                    ctx.shadowColor = 'black';
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(l.owner, pC.x, pC.y);
+                    ctx.shadowBlur = 0;
                 }
-            };
-
-            // Draw Other Lands first
-            lands.forEach(l => {
-                if (l === land) return; // Skip self for now
-                const isMyLand = (l.owner === currentUser.minecraftName);
-                // "Other" -> Red, "My Other" -> Dark Green
-                drawBox(l, isMyLand ? '#166534' : '#dc2626', 1, isMyLand ? 'rgba(22, 101, 52, 0.2)' : 'rgba(220, 38, 38, 0.1)');
             });
-
-            // Draw Current Land (Highlight)
-            // 'reticle' style: Corner brackets? Or just bold box?
-            // "You prefrer for optmization and also edit it" -> let's make it nice.
-
-            // Bright Green Box
-            drawBox(land, '#4ade80', 2, 'rgba(74, 222, 128, 0.1)');
-
-            // Draw Coords?
         }
 
 
