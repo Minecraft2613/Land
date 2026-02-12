@@ -99,6 +99,33 @@
       "expirationTime": 1770894306448,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "Ansh",
+      "coords": [
+        {
+          "x": -68,
+          "y": 1,
+          "z": -131
+        },
+        {
+          "x": -44,
+          "y": 1,
+          "z": -55
+        }
+      ],
+      "blocks": 1925,
+      "cost": 21752.499999999996,
+      "baseCost": 19250,
+      "tax": 1925,
+      "gst": 577.5,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "KXMNAI",
+      "purchaseTime": 1770893908749,
+      "expirationTime": 1770894508749,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
