@@ -70,7 +70,7 @@
       "paymentCode": "CU3WZH",
       "purchaseTime": 1771499385118,
       "expirationTime": 1771499985118,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -78,5 +78,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1023791.3
+  "governmentBalance": 1069330.3
 }
