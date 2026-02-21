@@ -97,7 +97,7 @@
       "paymentCode": "MXYAQG",
       "purchaseTime": 1771668172356,
       "expirationTime": 1771668772356,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -105,5 +105,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1069330.3
+  "governmentBalance": 1198104.4000000001
 }
