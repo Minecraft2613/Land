@@ -124,7 +124,7 @@
       "paymentCode": "6CJZ2N",
       "purchaseTime": 1771669629677,
       "expirationTime": 1771670229677,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -132,5 +132,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1198104.4000000001
+  "governmentBalance": 1202269.6
 }
