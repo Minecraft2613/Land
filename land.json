@@ -126,6 +126,33 @@
       "expirationTime": 1771670229677,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 297,
+          "y": 1,
+          "z": -174
+        },
+        {
+          "x": 347,
+          "y": 1,
+          "z": -238
+        }
+      ],
+      "blocks": 3315,
+      "cost": 23012.73,
+      "baseCost": 12928.5,
+      "tax": 5042.12,
+      "gst": 5042.12,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "BKSFJN",
+      "purchaseTime": 1771670365380,
+      "expirationTime": 1771670965380,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
