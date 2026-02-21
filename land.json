@@ -151,7 +151,7 @@
       "paymentCode": "BKSFJN",
       "purchaseTime": 1771670365380,
       "expirationTime": 1771670965380,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -159,5 +159,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1202269.6
+  "governmentBalance": 1225282.33
 }
