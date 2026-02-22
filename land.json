@@ -182,7 +182,7 @@
       "paymentCode": "4MPCDF",
       "purchaseTime": 1771756804317,
       "expirationTime": 1771757404317,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -190,5 +190,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1225282.33
+  "governmentBalance": 1225293.6300000001
 }
