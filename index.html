@@ -600,9 +600,9 @@
         // --- UI Rendering ---
 
         function renderLandCard(land) {
-            const isPending = !land.paid;
-            const statusClass = land.paid ? 'status-paid' : 'status-pending';
-            const statusText = land.paid ? 'OWNED' : 'AWAITING BANK';
+            const isPending = !land.paid && land.paymentCode && (new Date().getTime() < land.expirationTime);
+            const statusClass = land.paid ? 'status-paid' : (isPending ? 'status-pending' : 'status-expired');
+            const statusText = land.paid ? 'OWNED' : (isPending ? 'RESERVED' : 'EXPIRED');
             const canvasId = `map-${land.id || land.paymentCode}`;
 
             const c1 = land.coords[0];
@@ -615,7 +615,7 @@
                     <div class="land-details">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
                             <h3>${land.landType} Plot</h3>
-                            <span class="detail-value ${statusClass}" style="padding: 0.2rem 0.6rem; border-radius: 6px; background: rgba(0,0,0,0.4); font-size:0.6rem; font-weight:900; letter-spacing:0.05em;">${statusText}</span>
+                            <span class="detail-value ${statusClass}" style="padding: 0.2rem 0.6rem; border-radius: 6px; background: rgba(0,0,0,0.4); font-size:0.75rem; letter-spacing:0.05em;">${statusText}</span>
                         </div>
                         
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.85rem;">
@@ -632,14 +632,21 @@
                     </div>
 
                     ${isPending ? `
-                        <div class="pending-payment-section" style="border: 2px solid #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 1.25rem; border-radius: 12px; margin-top: 1rem;">
-                            <div style="text-align: center;">
-                                <h4 style="margin:0; color: #f59e0b; font-size: 0.8rem; font-weight: 900; text-transform: uppercase;">Payment Required</h4>
-                                <p style="font-size: 0.7rem; color: #d1d5db; margin: 0.5rem 0;">Go to your <strong>Bank Dashboard</strong> to Accept and Pay for this land.</p>
-                                <div style="font-size: 1.4rem; font-weight: 900; color: #fff; margin-bottom: 0.75rem;">$${parseFloat(land.cost).toFixed(2)}</div>
-                                <a href="https://minecraft-bank-web.pages.dev" target="_blank" class="button" style="width:100%; justify-content:center; background: #f59e0b; color: #000; font-weight: 900; text-decoration: none; display: flex; align-items: center; border: none; border-radius: 8px; height: 40px;">Open Bank Dashboard ➔</a>
-                                <p style="font-size: 0.6rem; color: #6b7280; margin-top: 0.75rem; font-style: italic;">Auto-refreshing status...</p>
+                        <div class="pending-payment-section" id="pending-section-${land.paymentCode}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                <h4 style="margin:0;">Payment Required</h4>
+                                <span id="timer-${land.paymentCode}" class="timer-display" style="background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px;">--:--</span>
                             </div>
+                            
+                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                                <code style="flex-grow:1; text-align:center; padding:0.5rem; border:1px dashed var(--warning); background:rgba(245, 158, 11, 0.05); display:flex; align-items:center; justify-content:center;">/land payment ${land.paymentCode}</code>
+                                <button class="button copy-button" onclick="copyCommand('${land.paymentCode}', this)" style="background:var(--bg-card); border-color:var(--glass-border); min-width:80px;">
+                                    <svg xmlns="http://www.w3.org/2001/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    Copy
+                                </button>
+                            </div>
+                            
+                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.5rem;" onclick="cancelPayment('${land.paymentCode}')">Cancel Reservation</button>
                         </div>
                     ` : ''}
                 </div>
@@ -648,59 +655,228 @@
 
         function renderDashboard() {
             if (!currentUser) return;
-            
-            // Only switch view if we are not currently buying land
-            const buyView = document.getElementById('buy-land-view');
-            if (!buyView.classList.contains('active')) {
-                setView('dashboard-view');
-            }
+            setView('dashboard-view');
 
             dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}`;
-            govPanelButton.style.display = (currentUser.minecraftName.toLowerCase() === 'minecraft2613' || currentUser.minecraftName === 'ansh') ? 'flex' : 'none';
+            govPanelButton.style.display = currentUser.minecraftName.toLowerCase() === 'minecraft2613' ? 'flex' : 'none';
 
+            // Check pending payments globally to disable button
+            hasPendingPayment = lands.some(l => !l.paid && l.owner === currentUser.minecraftName && new Date().getTime() < l.expirationTime);
+
+            buyLandButton.disabled = hasPendingPayment;
+            buyLandButton.style.opacity = hasPendingPayment ? '0.5' : '1';
+            buyLandButton.innerHTML = hasPendingPayment ? '<span style="font-size:1.2rem; margin-right:0.5rem;">⏳</span> One Reservation Active' : '<span style="font-size:1.2rem; margin-right:0.5rem;">+</span> Buy Land';
+
+            // Render Cards
             const myLands = lands.filter(l => l.owner === currentUser.minecraftName);
             userLandsList.innerHTML = myLands.length ? myLands.map(renderLandCard).join('') : '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">You own no land. Start your empire today!</p>';
 
+            // Post-render: Initialize Maps and Timers
             myLands.forEach(land => {
+                // Render Map
                 renderTerrainMap(`map-${land.id || land.paymentCode}`, land);
+
+                // Initialize Timer if pending
+                if (!land.paid && land.paymentCode && new Date().getTime() < land.expirationTime) {
+                    startCardTimer(land.paymentCode, land.expirationTime);
+                }
             });
         }
 
-        // --- Fast Polling for Payment Confirmation ---
-        setInterval(async () => {
-            if (currentUser) {
-                const oldPaidCount = lands.filter(l => l.owner === currentUser.minecraftName && l.paid).length;
-                await loadData();
-                const newPaidCount = lands.filter(l => l.owner === currentUser.minecraftName && l.paid).length;
-                
-                if (newPaidCount > oldPaidCount) {
-                    showPaymentSuccess();
-                    renderDashboard();
-                } else {
-                    // Only re-render if we aren't in the middle of filling a form
-                    const buyView = document.getElementById('buy-land-view');
-                    const loginView = document.getElementById('login-view');
-                    if (!buyView.classList.contains('active') && !loginView.classList.contains('active')) {
-                        renderDashboard();
-                    }
-                }
-            }
-        }, 5000);
+        // --- Logic & Timers ---
 
-        async function cancelPayment(code) {
-            // New system handles this via Bank 'Decline'
+        function startCardTimer(code, expiry) {
+            if (landCardTimers[code]) clearInterval(landCardTimers[code]);
+
+            const tick = () => {
+                const now = new Date().getTime();
+                const left = Math.ceil((expiry - now) / 1000);
+                const el = document.getElementById(`timer-${code}`);
+
+                if (!el) { clearInterval(landCardTimers[code]); return; }
+
+                if (left <= 0) {
+                    el.textContent = "Expired";
+                    clearInterval(landCardTimers[code]);
+                    // Auto-refresh to show expired state
+                    loadData().then(renderDashboard);
+                } else {
+                    const m = Math.floor(left / 60).toString().padStart(2, '0');
+                    const s = (left % 60).toString().padStart(2, '0');
+                    el.textContent = `${m}:${s}`;
+                }
+            };
+
+            tick();
+            landCardTimers[code] = setInterval(tick, 1000);
+
+            // Poll for payment success specifically for this card
+            const poller = setInterval(async () => {
+                await loadData();
+                const l = lands.find(x => x.paymentCode === code);
+                if (!l || l.paid) {
+                    clearInterval(poller);
+                    clearInterval(landCardTimers[code]);
+                    if (l && l.paid) showPaymentSuccess();
+                    renderDashboard();
+                }
+            }, 3000);
         }
 
-        // --- Buy Land Submit ---
+        async function cancelPayment(code) {
+            if (!confirm("Cancel this reservation?")) return;
+            showLoading("Cancelling...");
+            try {
+                await fetch(`${API_URL}/cancel-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentCode: code })
+                });
+                await loadData();
+                renderDashboard();
+            } catch (e) { console.error(e); }
+            hideLoading();
+        }
+
+        // --- Form Handling ---
+
+        function copyCommand(code, btn) {
+            const cmd = `/land payment ${code}`;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(cmd).then(() => {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = `<span style="color:#6ee7b7; font-weight:bold;">✓ Copied</span>`;
+                    btn.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.borderColor = '';
+                    }, 2000);
+                });
+            } else {
+                // Fallback
+                prompt("Copy this:", cmd);
+            }
+        }
+
+        function renderBuyLand() {
+            setView('buy-land-view');
+            renderCoordinatesForm(buyLandForm, 2, 'player');
+            // Re-attach live calc listeners which are lost on innerHTML replace
+            const inputs = buyLandForm.querySelectorAll('input');
+            inputs.forEach(i => i.addEventListener('input', updateLiveCalc));
+        }
+
+        function updateLiveCalc() {
+            const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
+            const details = calculatePlotDetails(coords);
+            const card = document.getElementById('live-calculation-card');
+
+            if (details.isValid) {
+                card.style.display = 'block';
+                document.getElementById('calc-blocks').textContent = details.blocks.toLocaleString();
+                document.getElementById('calc-base-cost').textContent = details.baseCost.toFixed(2);
+                document.getElementById('calc-tax').textContent = details.tax.toFixed(2);
+                document.getElementById('calc-gst').textContent = details.gst.toFixed(2);
+                document.getElementById('calc-total-cost').textContent = details.cost.toFixed(2);
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        // Helpers
+        function renderCoordinatesForm(el, count, type) {
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `<div class="form-group"><label>Point ${i}</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                 <input type="number" name="${type}-coord-x-${i}" placeholder="X" required class="coord-input">
+                 <!-- Y hidden -->
+                 <input type="hidden" name="${type}-coord-y-${i}" value="1">
+                 <input type="number" name="${type}-coord-z-${i}" placeholder="Z" required class="coord-input">
+                 </div></div>`;
+            }
+            el.querySelector('.form-grid').innerHTML = html;
+        }
+        function getFormCoordinates(el, count, prefix) {
+            const arr = [];
+            for (let i = 1; i <= count; i++) {
+                const x = el.querySelector(`[name="${prefix}-x-${i}"]`).value;
+                const y = el.querySelector(`[name="${prefix}-y-${i}"]`).value || 1;
+                const z = el.querySelector(`[name="${prefix}-z-${i}"]`).value;
+                arr.push({ x, y, z });
+            }
+            return arr;
+        }
+
+        // --- Standard Utils ---
+
+        function setView(id) {
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showLoading(msg) {
+            document.getElementById('loading-message').textContent = msg;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        function showMessage(el, msg, type) {
+            if (!el) return;
+            el.textContent = msg;
+            el.className = `messages message-${type}`;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 4000);
+        }
+        function showPaymentSuccess() {
+            const overlay = document.getElementById('payment-status-overlay');
+            if (overlay) {
+                // Minimal success interaction
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audio.play().catch(e => { }); // ignore autoplay policy
+                document.getElementById('payment-status-message').textContent = "Payment Successful!";
+                document.getElementById('payment-status-icon').innerHTML = '<svg xmlns="http://www.w3.org/2001/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="64" height="64"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                overlay.style.display = 'flex';
+            }
+        }
+
+        // --- Init ---
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            if (!name) return;
+
+            showLoading("Authenticating...");
+            await loadData();
+
+            let user = users.find(u => u.minecraftName === name);
+            if (!user) {
+                user = { minecraftName: name, minecraftEdition: document.getElementById('edition').value };
+                users.push(user);
+                await saveData();
+            }
+            currentUser = user;
+            hideLoading();
+            renderDashboard();
+        });
+
+        // Event Listeners for Buttons
+        document.getElementById('logout-button').addEventListener('click', () => { window.location.reload(); });
+        document.getElementById('payment-status-close').addEventListener('click', () => { document.getElementById('payment-status-overlay').style.display = 'none'; });
+        buyLandButton.addEventListener('click', renderBuyLand);
+        document.getElementById('back-from-buy-button').addEventListener('click', () => setView('dashboard-view'));
+
+        // Buy Land Submit
         buyLandForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            showLoading("Requesting Bank Payment...");
+            showLoading("Reserving Plot...");
             try {
                 const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
                 const details = calculatePlotDetails(coords);
 
                 const payload = {
-                    id: `LAND-${Date.now()}`,
+                    id: `LAND-${Date.now()}-${Math.floor(Math.random()*1000)}`,
                     owner: currentUser.minecraftName,
                     coords: coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) })),
                     blocks: details.blocks,
@@ -720,129 +896,64 @@
                 const json = await res.json();
 
                 if (json.success) {
-                    alert("Plot Reserved! Go to your Bank Dashboard to pay.");
                     await loadData();
                     renderDashboard();
                 } else {
-                    alert("Bank Error: " + (json.error || json.message));
+                    alert("Error: " + json.message);
                 }
             } catch (err) {
                 console.error(err);
-                alert("Bank Connection Failed");
+                alert("Reservation Failed");
             }
             hideLoading();
         });
 
         // Init
         loadData();
+        // Helpers I preserved from original code for math
+const calculatePlotDetails = (coords) => {
+    if (!coords || coords.length < 2) return { isValid: false };
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('name').value.trim();
-            if (!name) return;
+    const c1 = coords[0];
+    const c2 = coords[1];
 
-            showLoading("Authenticating...");
-            try {
-                await loadData();
-                if (!Array.isArray(users)) users = [];
-                let user = users.find(u => u.minecraftName && u.minecraftName.toLowerCase() === name.toLowerCase());
-                if (!user) {
-                    user = { minecraftName: name, minecraftEdition: document.getElementById('edition').value, joinDate: new Date().getTime() };
-                    users.push(user);
-                    await saveData();
-                }
-                currentUser = user;
-                renderDashboard();
-            } catch (err) {
-                console.error("Login Failed:", err);
-                alert("Authentication Failed: Check console for details.");
-            } finally {
-                hideLoading();
-            }
-        });
+    if (
+        c1.x === undefined || c1.z === undefined ||
+        c2.x === undefined || c2.z === undefined
+    ) return { isValid: false };
 
-        document.getElementById('logout-button').addEventListener('click', () => { window.location.reload(); });
-        document.getElementById('payment-status-close').addEventListener('click', () => { document.getElementById('payment-status-overlay').style.display = 'none'; });
-        buyLandButton.addEventListener('click', renderBuyLand);
-        document.getElementById('back-from-buy-button').addEventListener('click', () => setView('dashboard-view'));
+    const x1 = parseFloat(c1.x);
+    const z1 = parseFloat(c1.z);
+    const x2 = parseFloat(c2.x);
+    const z2 = parseFloat(c2.z);
 
-        function renderBuyLand() {
-            setView('buy-land-view');
-            renderCoordinatesForm(buyLandForm, 2, 'player');
-            const inputs = buyLandForm.querySelectorAll('input');
-            inputs.forEach(i => i.addEventListener('input', updateLiveCalc));
-        }
+    if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2))
+        return { isValid: false };
 
-        function updateLiveCalc() {
-            const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
-            const details = calculatePlotDetails(coords);
-            const card = document.getElementById('live-calculation-card');
-            if (details.isValid) {
-                card.style.display = 'block';
-                document.getElementById('calc-blocks').textContent = details.blocks.toLocaleString();
-                document.getElementById('calc-base-cost').textContent = details.baseCost.toFixed(2);
-                document.getElementById('calc-tax').textContent = details.tax.toFixed(2);
-                document.getElementById('calc-gst').textContent = details.gst.toFixed(2);
-                document.getElementById('calc-total-cost').textContent = details.cost.toFixed(2);
-            } else { card.style.display = 'none'; }
-        }
+    const width  = Math.abs(x1 - x2) + 1;
+    const depth  = Math.abs(z1 - z2) + 1;
+    const blocks = width * depth;
 
-        function renderCoordinatesForm(el, count, type) {
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `<div class="form-group"><label>Point ${i}</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                 <input type="number" name="${type}-coord-x-${i}" placeholder="X" required class="coord-input">
-                 <input type="hidden" name="${type}-coord-y-${i}" value="1">
-                 <input type="number" name="${type}-coord-z-${i}" placeholder="Z" required class="coord-input">
-                 </div></div>`;
-            }
-            el.querySelector('.form-grid').innerHTML = html;
-        }
+    const PRICE_PER_BLOCK = 3.9;
+    const TAX_RATE = 0.39;   // 39%
+    const GST_RATE = 0.39;   // 3% (Restored from 0.39 code)
 
-        function getFormCoordinates(el, count, prefix) {
-            const arr = [];
-            for (let i = 1; i <= count; i++) {
-                const x = el.querySelector(`[name="${prefix}-x-${i}"]`).value;
-                const y = el.querySelector(`[name="${prefix}-y-${i}"]`).value || 1;
-                const z = el.querySelector(`[name="${prefix}-z-${i}"]`).value;
-                arr.push({ x, y, z });
-            }
-            return arr;
-        }
+    const baseCost = blocks * PRICE_PER_BLOCK;
+    const tax = baseCost * TAX_RATE;
+    const gst = baseCost * GST_RATE;
+    const total = baseCost + tax + gst;
 
-        function setView(id) {
-            views.forEach(v => v.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
+    const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-        function showLoading(msg) {
-            document.getElementById('loading-message').textContent = msg;
-            document.getElementById('loading-overlay').style.display = 'flex';
-        }
-        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
-        function showPaymentSuccess() {
-            const overlay = document.getElementById('payment-status-overlay');
-            if (overlay) {
-                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
-                audio.play().catch(e => { });
-                document.getElementById('payment-status-message').textContent = "Payment Successful!";
-                document.getElementById('payment-status-icon').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="64" height="64"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
-                overlay.style.display = 'flex';
-            }
-        }
-
-        const calculatePlotDetails = (coords) => {
-            if (!coords || coords.length < 2) return { isValid: false };
-            const c1 = coords[0], c2 = coords[1];
-            if (c1.x === undefined || c1.z === undefined || c2.x === undefined || c2.z === undefined) return { isValid: false };
-            const x1 = parseFloat(c1.x), z1 = parseFloat(c1.z), x2 = parseFloat(c2.x), z2 = parseFloat(c2.z);
-            if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2)) return { isValid: false };
-            const width = Math.abs(x1 - x2) + 1, depth = Math.abs(z1 - z2) + 1, blocks = width * depth;
-            const PRICE_PER_BLOCK = 3.9, TAX_RATE = 0.39, GST_RATE = 0.39;
-            const baseCost = blocks * PRICE_PER_BLOCK, tax = baseCost * TAX_RATE, gst = baseCost * GST_RATE, total = baseCost + tax + gst;
-            const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
-            return { isValid: true, blocks: blocks, baseCost: round2(baseCost), tax: round2(tax), gst: round2(gst), cost: round2(total) };
-        };
+    return {
+        isValid: true,
+        blocks: blocks,
+        baseCost: round2(baseCost),
+        tax: round2(tax),
+        gst: round2(gst),
+        cost: round2(total)
+    };
+};
     </script>
 </body>
 
