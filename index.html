@@ -873,10 +873,11 @@
             showLoading("Reserving Plot...");
             try {
                 const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
-                const details = calculatePlotDetails(coords);
+                const details = calculatePlotDetails(coords); // reuse existing logic
 
+                // Construct payload manually since verify logic is client-side here
+                // Note: Production should verify server-side
                 const payload = {
-                    id: `LAND-${Date.now()}-${Math.floor(Math.random()*1000)}`,
                     owner: currentUser.minecraftName,
                     coords: coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) })),
                     blocks: details.blocks,
@@ -936,7 +937,7 @@ const calculatePlotDetails = (coords) => {
 
     const PRICE_PER_BLOCK = 3.9;
     const TAX_RATE = 0.39;   // 39%
-    const GST_RATE = 0.39;   // 3% (Restored from 0.39 code)
+    const GST_RATE = 0.39;   // 3%
 
     const baseCost = blocks * PRICE_PER_BLOCK;
     const tax = baseCost * TAX_RATE;
