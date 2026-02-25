@@ -725,50 +725,114 @@
 
         // Init
         loadData();
-        // Helpers I preserved from original code for math
-const calculatePlotDetails = (coords) => {
-    if (!coords || coords.length < 2) return { isValid: false };
 
-    const c1 = coords[0];
-    const c2 = coords[1];
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            if (!name) return;
 
-    if (
-        c1.x === undefined || c1.z === undefined ||
-        c2.x === undefined || c2.z === undefined
-    ) return { isValid: false };
+            showLoading("Authenticating...");
+            try {
+                await loadData();
+                if (!Array.isArray(users)) users = [];
+                let user = users.find(u => u.minecraftName && u.minecraftName.toLowerCase() === name.toLowerCase());
+                if (!user) {
+                    user = { minecraftName: name, minecraftEdition: document.getElementById('edition').value, joinDate: new Date().getTime() };
+                    users.push(user);
+                    await saveData();
+                }
+                currentUser = user;
+                renderDashboard();
+            } catch (err) {
+                console.error("Login Failed:", err);
+                alert("Authentication Failed: Check console for details.");
+            } finally {
+                hideLoading();
+            }
+        });
 
-    const x1 = parseFloat(c1.x);
-    const z1 = parseFloat(c1.z);
-    const x2 = parseFloat(c2.x);
-    const z2 = parseFloat(c2.z);
+        document.getElementById('logout-button').addEventListener('click', () => { window.location.reload(); });
+        document.getElementById('payment-status-close').addEventListener('click', () => { document.getElementById('payment-status-overlay').style.display = 'none'; });
+        buyLandButton.addEventListener('click', renderBuyLand);
+        document.getElementById('back-from-buy-button').addEventListener('click', () => setView('dashboard-view'));
 
-    if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2))
-        return { isValid: false };
+        function renderBuyLand() {
+            setView('buy-land-view');
+            renderCoordinatesForm(buyLandForm, 2, 'player');
+            const inputs = buyLandForm.querySelectorAll('input');
+            inputs.forEach(i => i.addEventListener('input', updateLiveCalc));
+        }
 
-    const width  = Math.abs(x1 - x2) + 1;
-    const depth  = Math.abs(z1 - z2) + 1;
-    const blocks = width * depth;
+        function updateLiveCalc() {
+            const coords = getFormCoordinates(buyLandForm, 2, 'player-coord');
+            const details = calculatePlotDetails(coords);
+            const card = document.getElementById('live-calculation-card');
+            if (details.isValid) {
+                card.style.display = 'block';
+                document.getElementById('calc-blocks').textContent = details.blocks.toLocaleString();
+                document.getElementById('calc-base-cost').textContent = details.baseCost.toFixed(2);
+                document.getElementById('calc-tax').textContent = details.tax.toFixed(2);
+                document.getElementById('calc-gst').textContent = details.gst.toFixed(2);
+                document.getElementById('calc-total-cost').textContent = details.cost.toFixed(2);
+            } else { card.style.display = 'none'; }
+        }
 
-    const PRICE_PER_BLOCK = 3.9;
-    const TAX_RATE = 0.39;   // 39%
-    const GST_RATE = 0.39;   // 3%
+        function renderCoordinatesForm(el, count, type) {
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `<div class="form-group"><label>Point ${i}</label><div style="display:grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                 <input type="number" name="${type}-coord-x-${i}" placeholder="X" required class="coord-input">
+                 <input type="hidden" name="${type}-coord-y-${i}" value="1">
+                 <input type="number" name="${type}-coord-z-${i}" placeholder="Z" required class="coord-input">
+                 </div></div>`;
+            }
+            el.querySelector('.form-grid').innerHTML = html;
+        }
 
-    const baseCost = blocks * PRICE_PER_BLOCK;
-    const tax = baseCost * TAX_RATE;
-    const gst = baseCost * GST_RATE;
-    const total = baseCost + tax + gst;
+        function getFormCoordinates(el, count, prefix) {
+            const arr = [];
+            for (let i = 1; i <= count; i++) {
+                const x = el.querySelector(`[name="${prefix}-x-${i}"]`).value;
+                const y = el.querySelector(`[name="${prefix}-y-${i}"]`).value || 1;
+                const z = el.querySelector(`[name="${prefix}-z-${i}"]`).value;
+                arr.push({ x, y, z });
+            }
+            return arr;
+        }
 
-    const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+        function setView(id) {
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
 
-    return {
-        isValid: true,
-        blocks: blocks,
-        baseCost: round2(baseCost),
-        tax: round2(tax),
-        gst: round2(gst),
-        cost: round2(total)
-    };
-};
+        function showLoading(msg) {
+            document.getElementById('loading-message').textContent = msg;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+        function showPaymentSuccess() {
+            const overlay = document.getElementById('payment-status-overlay');
+            if (overlay) {
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audio.play().catch(e => { });
+                document.getElementById('payment-status-message').textContent = "Payment Successful!";
+                document.getElementById('payment-status-icon').innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" width="64" height="64"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+                overlay.style.display = 'flex';
+            }
+        }
+
+        const calculatePlotDetails = (coords) => {
+            if (!coords || coords.length < 2) return { isValid: false };
+            const c1 = coords[0], c2 = coords[1];
+            if (c1.x === undefined || c1.z === undefined || c2.x === undefined || c2.z === undefined) return { isValid: false };
+            const x1 = parseFloat(c1.x), z1 = parseFloat(c1.z), x2 = parseFloat(c2.x), z2 = parseFloat(c2.z);
+            if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2)) return { isValid: false };
+            const width = Math.abs(x1 - x2) + 1, depth = Math.abs(z1 - z2) + 1, blocks = width * depth;
+            const PRICE_PER_BLOCK = 3.9, TAX_RATE = 0.39, GST_RATE = 0.39;
+            const baseCost = blocks * PRICE_PER_BLOCK, tax = baseCost * TAX_RATE, gst = baseCost * GST_RATE, total = baseCost + tax + gst;
+            const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+            return { isValid: true, blocks: blocks, baseCost: round2(baseCost), tax: round2(tax), gst: round2(gst), cost: round2(total) };
+        };
     </script>
 </body>
 
