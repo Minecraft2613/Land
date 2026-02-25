@@ -648,7 +648,12 @@
 
         function renderDashboard() {
             if (!currentUser) return;
-            setView('dashboard-view');
+            
+            // Only switch view if we are not currently buying land
+            const buyView = document.getElementById('buy-land-view');
+            if (!buyView.classList.contains('active')) {
+                setView('dashboard-view');
+            }
 
             dashboardTitle.textContent = `Welcome, ${currentUser.minecraftName}`;
             govPanelButton.style.display = (currentUser.minecraftName.toLowerCase() === 'minecraft2613' || currentUser.minecraftName === 'ansh') ? 'flex' : 'none';
@@ -672,7 +677,12 @@
                     showPaymentSuccess();
                     renderDashboard();
                 } else {
-                    renderDashboard();
+                    // Only re-render if we aren't in the middle of filling a form
+                    const buyView = document.getElementById('buy-land-view');
+                    const loginView = document.getElementById('login-view');
+                    if (!buyView.classList.contains('active') && !loginView.classList.contains('active')) {
+                        renderDashboard();
+                    }
                 }
             }
         }, 5000);
