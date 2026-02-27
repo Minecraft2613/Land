@@ -223,6 +223,33 @@
       "expirationTime": 1772189800313,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 200,
+          "y": 1,
+          "z": -236
+        },
+        {
+          "x": 114,
+          "y": 1,
+          "z": -409
+        }
+      ],
+      "blocks": 15138,
+      "cost": 105088,
+      "baseCost": 59038.2,
+      "tax": 23024.9,
+      "gst": 23024.9,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "DDDG21",
+      "purchaseTime": 1772189451916,
+      "expirationTime": 1772190051916,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
