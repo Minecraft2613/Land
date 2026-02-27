@@ -275,7 +275,7 @@
       "paymentCode": "HZ0LGI",
       "purchaseTime": 1772190988970,
       "expirationTime": 1772191588970,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -283,5 +283,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1383723.9600000002
+  "governmentBalance": 1787442.9100000001
 }
