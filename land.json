@@ -250,6 +250,33 @@
       "expirationTime": 1772190051916,
       "paid": true,
       "status": "pending"
+    },
+    {
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 202,
+          "y": 1,
+          "z": 34
+        },
+        {
+          "x": 418,
+          "y": 1,
+          "z": 301
+        }
+      ],
+      "blocks": 58156,
+      "cost": 403718.95,
+      "baseCost": 226808.4,
+      "tax": 88455.28,
+      "gst": 88455.28,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "HZ0LGI",
+      "purchaseTime": 1772190988970,
+      "expirationTime": 1772191588970,
+      "paid": false,
+      "status": "pending"
     }
   ],
   "govConfig": {
