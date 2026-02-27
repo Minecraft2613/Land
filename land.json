@@ -221,7 +221,7 @@
       "paymentCode": "6QDT0Y",
       "purchaseTime": 1772189200313,
       "expirationTime": 1772189800313,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -229,5 +229,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1225293.6300000001
+  "governmentBalance": 1278635.9600000002
 }
