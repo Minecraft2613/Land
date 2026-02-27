@@ -248,7 +248,7 @@
       "paymentCode": "DDDG21",
       "purchaseTime": 1772189451916,
       "expirationTime": 1772190051916,
-      "paid": false,
+      "paid": true,
       "status": "pending"
     }
   ],
@@ -256,5 +256,5 @@
     "gap": 10,
     "landType": "Government"
   },
-  "governmentBalance": 1278635.9600000002
+  "governmentBalance": 1383723.9600000002
 }
