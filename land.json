@@ -281,33 +281,6 @@
       "expirationTime": 1772191588970,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "owner": "BlackForge",
-      "coords": [
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        },
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        }
-      ],
-      "blocks": 1,
-      "cost": 6.94,
-      "baseCost": 3.9,
-      "tax": 1.52,
-      "gst": 1.52,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "9KS8VN",
-      "purchaseTime": 1772300180510,
-      "expirationTime": 1772300780510,
-      "paid": false,
-      "status": "pending"
     }
   ],
   "govConfig": {
