@@ -222,15 +222,17 @@
 
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}/data?t=${Date.now()}`, {
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
+                // Simplified fetch to avoid CORS preflight issues with custom headers
+                const response = await fetch(`${API_URL}/data?t=${Date.now()}`);
                 if (!response.ok) throw new Error('API Error');
                 const data = await response.json();
                 users = data.users || [];
                 lands = data.lands || [];
                 govConfig = data.govConfig || { gap: 10, landType: 'Government' };
                 governmentBalance = data.governmentBalance || 0;
+
+                // Active refresh of dashboard UI
+                renderDashboard();
             } catch (e) {
                 console.error("Load failed:", e);
             }
