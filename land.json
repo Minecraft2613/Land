@@ -281,30 +281,6 @@
       "expirationTime": 1772191588970,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "id": "LAND-1772301687147-812",
-      "paymentCode": "LAND-1772301687147-812",
-      "owner": "BlackForge",
-      "coords": [
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        },
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        }
-      ],
-      "blocks": 1,
-      "cost": 6.94,
-      "landType": "Player",
-      "purchaseTime": 1772301688372,
-      "expirationTime": 1772302288372,
-      "paid": false,
-      "status": "pending"
     }
   ],
   "govConfig": {
