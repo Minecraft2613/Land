@@ -632,10 +632,10 @@
                     </div>
 
                     ${isPending ? `
-                        <div class="pending-payment-section" id="pending-section-${land.paymentCode}">
+                        <div class="pending-payment-section" id="pending-section-${land.id || land.paymentCode}">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                                 <h4 style="margin:0; color:var(--warning);">Payment Required</h4>
-                                <span id="timer-${land.paymentCode}" class="timer-display" style="background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px;">--:--</span>
+                                <span id="timer-${land.id || land.paymentCode}" class="timer-display" style="background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px;">--:--</span>
                             </div>
                             
                             <div style="background:rgba(30, 41, 59, 0.5); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; margin-bottom:0.8rem; text-align:center;">
@@ -646,7 +646,7 @@
                                 <p style="margin:0.5rem 0 0 0; font-size:0.7rem; color:var(--text-muted); font-style:italic;">Accept the prompt on your Home Page</p>
                             </div>
                             
-                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.2rem; font-size:0.75rem; padding:0.4rem; opacity:0.6;" onclick="cancelPayment('${land.paymentCode}')">Cancel Reservation</button>
+                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.2rem; font-size:0.75rem; padding:0.4rem; opacity:0.6;" onclick="cancelPayment('${land.id || land.paymentCode}')">Cancel Reservation</button>
                         </div>
                     ` : ''}
                 </div>
@@ -677,8 +677,8 @@
                 renderTerrainMap(`map-${land.id || land.paymentCode}`, land);
 
                 // Initialize Timer if pending
-                if (!land.paid && land.paymentCode && new Date().getTime() < land.expirationTime) {
-                    startCardTimer(land.paymentCode, land.expirationTime);
+                if (!land.paid && (land.id || land.paymentCode) && new Date().getTime() < land.expirationTime) {
+                    startCardTimer(land.id || land.paymentCode, land.expirationTime);
                 }
             });
         }
@@ -713,7 +713,7 @@
             // Poll for payment success specifically for this card
             const poller = setInterval(async () => {
                 await loadData();
-                const l = lands.find(x => x.paymentCode === code);
+                const l = lands.find(x => (x.id || x.paymentCode) === code);
                 if (!l || l.paid) {
                     clearInterval(poller);
                     clearInterval(landCardTimers[code]);
@@ -730,7 +730,7 @@
                 await fetch(`${API_URL}/cancel-payment`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ paymentCode: code })
+                    body: JSON.stringify({ id: code })
                 });
                 await loadData();
                 renderDashboard();
@@ -892,7 +892,8 @@
                                 owner: currentUser.minecraftName,
                                 cost: json.cost,
                                 landData: payload,
-                                paymentCode: json.paymentCode
+                                id: json.id,
+                                paymentCode: json.id // Compatibility
                             })
                         });
                     } catch (bankErr) {
