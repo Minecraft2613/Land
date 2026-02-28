@@ -281,33 +281,6 @@
       "expirationTime": 1772191588970,
       "paid": true,
       "status": "pending"
-    },
-    {
-      "owner": "BlackForge",
-      "coords": [
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        },
-        {
-          "x": 999,
-          "y": 1,
-          "z": 999
-        }
-      ],
-      "blocks": 1,
-      "cost": 6.94,
-      "baseCost": 3.9,
-      "tax": 1.52,
-      "gst": 1.52,
-      "gap": 7,
-      "landType": "Player",
-      "paymentCode": "CSYI52",
-      "purchaseTime": 1772300676651,
-      "expirationTime": 1772301276651,
-      "paid": false,
-      "status": "pending"
     }
   ],
   "govConfig": {
