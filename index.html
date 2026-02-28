@@ -222,7 +222,9 @@
 
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}/data`);
+                const response = await fetch(`${API_URL}/data?t=${Date.now()}`, {
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 if (!response.ok) throw new Error('API Error');
                 const data = await response.json();
                 users = data.users || [];
@@ -600,7 +602,7 @@
         // --- UI Rendering ---
 
         function renderLandCard(land) {
-            const isPending = !land.paid && land.paymentCode && (new Date().getTime() < land.expirationTime);
+            const isPending = !land.paid && (land.id || land.paymentCode) && (new Date().getTime() < (land.expirationTime || 0));
             const statusClass = land.paid ? 'status-paid' : (isPending ? 'status-pending' : 'status-expired');
             const statusText = land.paid ? 'OWNED' : (isPending ? 'RESERVED' : 'EXPIRED');
             const canvasId = `map-${land.id || land.paymentCode}`;
@@ -614,7 +616,7 @@
                     
                     <div class="land-details">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem;">
-                            <h3>${land.landType} Plot</h3>
+                            <h3>${land.landType || 'Player'} Plot</h3>
                             <span class="detail-value ${statusClass}" style="padding: 0.2rem 0.6rem; border-radius: 6px; background: rgba(0,0,0,0.4); font-size:0.75rem; letter-spacing:0.05em;">${statusText}</span>
                         </div>
                         
