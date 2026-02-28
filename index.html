@@ -86,12 +86,12 @@
                         </div>
                         <div
                             style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
-                            <span style="color: var(--text-muted);">Tax (10%)</span>
+                            <span style="color: var(--text-muted);">Tax (39%)</span>
                             <span>$<span id="calc-tax">0.00</span></span>
                         </div>
                         <div
                             style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
-                            <span style="color: var(--text-muted);">GST (3%)</span>
+                            <span style="color: var(--text-muted);">GST (39%)</span>
                             <span>$<span id="calc-gst">0.00</span></span>
                         </div>
                         <div
@@ -634,19 +634,19 @@
                     ${isPending ? `
                         <div class="pending-payment-section" id="pending-section-${land.paymentCode}">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-                                <h4 style="margin:0;">Payment Required</h4>
+                                <h4 style="margin:0; color:var(--warning);">Payment Required</h4>
                                 <span id="timer-${land.paymentCode}" class="timer-display" style="background:rgba(0,0,0,0.3); padding:0.1rem 0.4rem; border-radius:4px;">--:--</span>
                             </div>
                             
-                            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-                                <code style="flex-grow:1; text-align:center; padding:0.5rem; border:1px dashed var(--warning); background:rgba(245, 158, 11, 0.05); display:flex; align-items:center; justify-content:center;">/land payment ${land.paymentCode}</code>
-                                <button class="button copy-button" onclick="copyCommand('${land.paymentCode}', this)" style="background:var(--bg-card); border-color:var(--glass-border); min-width:80px;">
-                                    <svg xmlns="http://www.w3.org/2001/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                    Copy
-                                </button>
+                            <div style="background:rgba(30, 41, 59, 0.5); border:1px solid rgba(255,255,255,0.1); padding:0.8rem; border-radius:8px; margin-bottom:0.8rem; text-align:center;">
+                                <p style="margin:0 0 0.5rem 0; font-size:0.85rem; color:var(--text-muted);">Completing payment...</p>
+                                <a href="https://minecraft-bank-web.pages.dev" target="_blank" class="button" style="width:100%; justify-content:center; background:var(--success); color:white; font-weight:700; border:none; text-decoration:none; display:flex; align-items:center; gap:0.5rem;">
+                                    <span>🏦</span> Go to Bank Dashboard
+                                </a>
+                                <p style="margin:0.5rem 0 0 0; font-size:0.7rem; color:var(--text-muted); font-style:italic;">Accept the prompt on your Home Page</p>
                             </div>
                             
-                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.5rem;" onclick="cancelPayment('${land.paymentCode}')">Cancel Reservation</button>
+                            <button class="button cancel-button" style="width:100%; justify-content:center; margin-top:0.2rem; font-size:0.75rem; padding:0.4rem; opacity:0.6;" onclick="cancelPayment('${land.paymentCode}')">Cancel Reservation</button>
                         </div>
                     ` : ''}
                 </div>
@@ -741,21 +741,7 @@
         // --- Form Handling ---
 
         function copyCommand(code, btn) {
-            const cmd = `/land payment ${code}`;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(cmd).then(() => {
-                    const originalText = btn.innerHTML;
-                    btn.innerHTML = `<span style="color:#6ee7b7; font-weight:bold;">✓ Copied</span>`;
-                    btn.style.borderColor = '#10b981';
-                    setTimeout(() => {
-                        btn.innerHTML = originalText;
-                        btn.style.borderColor = '';
-                    }, 2000);
-                });
-            } else {
-                // Fallback
-                prompt("Copy this:", cmd);
-            }
+            // Deprecated: No longer showing codes
         }
 
         function renderBuyLand() {
