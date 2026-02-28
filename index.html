@@ -876,7 +876,7 @@
                 const details = calculatePlotDetails(coords);
 
                 const payload = {
-                    id: `LAND-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                    id: `LAND-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                     owner: currentUser.minecraftName,
                     coords: coords.map(c => ({ x: parseFloat(c.x), y: parseFloat(c.y), z: parseFloat(c.z) })),
                     blocks: details.blocks,
@@ -896,6 +896,23 @@
                 const json = await res.json();
 
                 if (json.success) {
+                    // Notify Bank System to show upi-like notification
+                    try {
+                        const BANK_API_URL = 'https://minecraft-bank-backend.1987sakshamsingh.workers.dev';
+                        await fetch(`${BANK_API_URL}/api/land/request-purchase`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                owner: currentUser.minecraftName,
+                                cost: json.cost,
+                                landData: payload,
+                                paymentCode: json.paymentCode
+                            })
+                        });
+                    } catch (bankErr) {
+                        console.error("Failed to notify Bank system", bankErr);
+                    }
+
                     await loadData();
                     renderDashboard();
                 } else {
@@ -911,49 +928,49 @@
         // Init
         loadData();
         // Helpers I preserved from original code for math
-const calculatePlotDetails = (coords) => {
-    if (!coords || coords.length < 2) return { isValid: false };
+        const calculatePlotDetails = (coords) => {
+            if (!coords || coords.length < 2) return { isValid: false };
 
-    const c1 = coords[0];
-    const c2 = coords[1];
+            const c1 = coords[0];
+            const c2 = coords[1];
 
-    if (
-        c1.x === undefined || c1.z === undefined ||
-        c2.x === undefined || c2.z === undefined
-    ) return { isValid: false };
+            if (
+                c1.x === undefined || c1.z === undefined ||
+                c2.x === undefined || c2.z === undefined
+            ) return { isValid: false };
 
-    const x1 = parseFloat(c1.x);
-    const z1 = parseFloat(c1.z);
-    const x2 = parseFloat(c2.x);
-    const z2 = parseFloat(c2.z);
+            const x1 = parseFloat(c1.x);
+            const z1 = parseFloat(c1.z);
+            const x2 = parseFloat(c2.x);
+            const z2 = parseFloat(c2.z);
 
-    if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2))
-        return { isValid: false };
+            if (isNaN(x1) || isNaN(z1) || isNaN(x2) || isNaN(z2))
+                return { isValid: false };
 
-    const width  = Math.abs(x1 - x2) + 1;
-    const depth  = Math.abs(z1 - z2) + 1;
-    const blocks = width * depth;
+            const width = Math.abs(x1 - x2) + 1;
+            const depth = Math.abs(z1 - z2) + 1;
+            const blocks = width * depth;
 
-    const PRICE_PER_BLOCK = 3.9;
-    const TAX_RATE = 0.39;   // 39%
-    const GST_RATE = 0.39;   // 3% (Restored from 0.39 code)
+            const PRICE_PER_BLOCK = 3.9;
+            const TAX_RATE = 0.39;   // 39%
+            const GST_RATE = 0.39;   // 3% (Restored from 0.39 code)
 
-    const baseCost = blocks * PRICE_PER_BLOCK;
-    const tax = baseCost * TAX_RATE;
-    const gst = baseCost * GST_RATE;
-    const total = baseCost + tax + gst;
+            const baseCost = blocks * PRICE_PER_BLOCK;
+            const tax = baseCost * TAX_RATE;
+            const gst = baseCost * GST_RATE;
+            const total = baseCost + tax + gst;
 
-    const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+            const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-    return {
-        isValid: true,
-        blocks: blocks,
-        baseCost: round2(baseCost),
-        tax: round2(tax),
-        gst: round2(gst),
-        cost: round2(total)
-    };
-};
+            return {
+                isValid: true,
+                blocks: blocks,
+                baseCost: round2(baseCost),
+                tax: round2(tax),
+                gst: round2(gst),
+                cost: round2(total)
+            };
+        };
     </script>
 </body>
 
