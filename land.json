@@ -13,7 +13,36 @@
       "minecraftEdition": "Java"
     }
   ],
-  "lands": [],
+  "lands": [
+    {
+      "id": "LAND-1773399752897-942",
+      "owner": "billu_backchod",
+      "coords": [
+        {
+          "x": 576,
+          "y": 1,
+          "z": -399
+        },
+        {
+          "x": 348,
+          "y": 1,
+          "z": -174
+        }
+      ],
+      "blocks": 51754,
+      "cost": 359276.27,
+      "baseCost": 201840.6,
+      "tax": 78717.83,
+      "gst": 78717.83,
+      "gap": 7,
+      "landType": "Player",
+      "paymentCode": "LAND-1773399752897-942",
+      "purchaseTime": 1773399752897,
+      "expirationTime": 1773400352897,
+      "paid": false,
+      "status": "pending"
+    }
+  ],
   "govConfig": {
     "gap": 10,
     "landType": "Government"
