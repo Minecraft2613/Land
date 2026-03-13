@@ -1,1 +1,14 @@
-{}
+{
+  "users": [
+    {
+      "minecraftName": "billu_backchod",
+      "minecraftEdition": "Java"
+    }
+  ],
+  "lands": [],
+  "govConfig": {
+    "gap": 10,
+    "landType": "Government"
+  },
+  "governmentBalance": 0
+}
